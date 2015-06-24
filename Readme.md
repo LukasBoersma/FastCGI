@@ -6,8 +6,9 @@ It implements the parts of FastCGI that are neccessary to build a simple web app
 
 ## Basic Usage
 
-This code example shows how to create a FastCGI application and receive requests
+This code example shows how to create a FastCGI application and receive requests:
 
+```csharp
     // Create a new FCGIApplication, will accept FastCGI requests
     var app = new FCGIApplication();
     
@@ -16,9 +17,10 @@ This code example shows how to create a FastCGI application and receive requests
         request.WriteBodyASCII("Content-Type:text/html\n\nHello World!");
         request.Close();
     };
-
+    
     // Start listening on port 19000
     app.Run(19000);
+```
 
 ## HTTP server configuration
 
