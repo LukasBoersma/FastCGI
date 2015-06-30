@@ -4,6 +4,18 @@ This is an incomplete implementation of [FastCGI](http://www.fastcgi.com/devkit/
 
 This means that you can write web applications in C# that serve dynamic content.
 
+## License and contributing
+
+This software is distributed under the terms of the MIT license. You can use it for your own projects for free under the conditions specified in LICENSE.txt. 
+
+If you have questions, feel free to contact me. Visit my [website](https://lukas-boersma.com) for contact details.
+
+If you think you found a bug, you can open an Issue on Github. If you make changes to this library, I would be happy about a pull request.
+
+## Documentation
+
+I am hosting the full documentation here: [http://lukas-boersma.com/fastcgi-docs/](http://lukas-boersma.com/fastcgi-docs/).
+
 ## Basic Usage
 
 The most common usage scenario is to use this library together with a web server like Apache and nginx. The web server will serve static content and forward HTTP requests for dynamic content to your application.
