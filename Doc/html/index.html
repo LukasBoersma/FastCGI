@@ -80,15 +80,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">FastCGI for .NET Documentation</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>This is an incomplete implementation of <a href="http://www.fastcgi.com/devkit/doc/fcgi-spec.html">FastCGI</a> for .NET, written in C#. It implements the parts that are neccessary to build a simple web application using .NET.</p>
+<div class="textblock"><p>This is an implementation of <a href="http://www.fastcgi.com/devkit/doc/fcgi-spec.html">FastCGI</a> for .NET, written in C#. It implements the parts of the protocol that are necessary to build a simple web application using .NET.</p>
 <p>This means that you can write web applications in C# that serve dynamic content.</p>
 <h2>License and contributing</h2>
 <p>This software is distributed under the terms of the MIT license. You can use it for your own projects for free under the conditions specified in LICENSE.txt.</p>
-<p>If you have questions, feel free to contact me. Visit my <a href="https://lukas-boersma.com">website</a> for contact details.</p>
+<p>If you have questions, feel free to contact me. Visit <a href="https://lukas-boersma.com">lukas-boersma.com</a> for my contact details.</p>
 <p>If you think you found a bug, you can open an Issue on Github. If you make changes to this library, I would be happy about a pull request.</p>
 <h2>Documentation</h2>
-<p>I am hosting the full documentation here: <a href="http://lukas-boersma.com/fastcgi-docs/">http://lukas-boersma.com/fastcgi-docs/</a>.</p>
-<h2>Basic Usage</h2>
+<p>I am hosting the full API documentation here: <a href="https://lukas-boersma.com/fastcgi-docs/">lukas-boersma.com/fastcgi-docs</a>.</p>
+<h2>Basic usage</h2>
 <p>The most common usage scenario is to use this library together with a web server like Apache and nginx. The web server will serve static content and forward HTTP requests for dynamic content to your application.</p>
 <p>Have a look at the <a class="el" href="class_fast_c_g_i_1_1_f_c_g_i_application.html" title="Main FastCGI listener class. ">FastCGI.FCGIApplication</a> class for usage examples and more information.</p>
 <p>This code example shows how to create a <a class="el" href="namespace_fast_c_g_i.html">FastCGI</a> application and receive requests:</p>
@@ -103,8 +103,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;// Start listening on port 19000</div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;app.Run(19000);</div>
-</div><!-- fragment --><h2>HTTP server configuration</h2>
-<p>Refer to your HTTP server documentation for configuration details:</p>
+</div><!-- fragment --><h2>Web server configuration</h2>
+<p>Refer to your web server documentation for configuration details:</p>
 <ul>
 <li><a href="http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html">nginx documentation</a></li>
 <li><a href="http://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html">Apache documentation</a></li>
