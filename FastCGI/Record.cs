@@ -9,16 +9,19 @@ using System.IO;
 namespace FastCGI
 {
     /// <summary>
-    /// Represents a FastCGI Record.
-    /// Described in the FastCGI Specification section 3.3.
-    /// Contains only the relevant part of a record, reserved bytes and padding are not included.
+    /// A FastCGI Record.
     /// </summary>
+    /// <remarks>
+    /// See section 3.3 of the FastCGI Specification for details.
+    /// </remarks>
     public class Record
     {
         /// <summary>
         /// Record types, used in the 'type' field of Record.
-        /// Described in the FastCGI Specification section 8.
         /// </summary>
+        /// <remarks>
+        /// Described in the FastCGI Specification section 8.
+        /// </remarks>
         public enum RecordType : byte
         {
             BeginRequest = Constants.FCGI_BEGIN_REQUEST,
@@ -47,20 +50,42 @@ namespace FastCGI
             UnknownRole = Constants.FCGI_UNKNOWN_ROLE
         }
 
-        public byte version = Constants.FCGI_VERSION_1;
-        public RecordType type;
-        public int requestId;
-        public int contentLength = 0;
-        public byte[] contentData;
+        /// <summary>
+        /// The version byte. Should always equal <see cref="Constants.FCGI_VERSION_1"/>.
+        /// </summary>
+        public byte Version = Constants.FCGI_VERSION_1;
+
+        /// <summary>
+        /// The <see cref="RecordType"/> of this record.
+        /// </summary>
+        public RecordType Type;
+
+        /// <summary>
+        /// The request id associated with this record.
+        /// </summary>
+        public int RequestId;
+
+        /// <summary>
+        /// The length of <see cref="ContentData"/>.
+        /// </summary>
+        public int ContentLength = 0;
+
+        /// <summary>
+        /// The data contained in this record.
+        /// </summary>
+        public byte[] ContentData;
 
         /// <summary>
         /// Tries to read a dictionary of name-value pairs from the record content.
-        /// Will return nonsense or throw an EndOfStreamException if the record content does not contain valid name-value pairs.
         /// </summary>
+        /// <remarks>
+        /// This method does not make any attempt to make sure whether this record actually contains a set of name-value pairs.
+        /// It will return nonsense or throw an EndOfStreamException if the record content does not contain valid name-value pairs.
+        /// </remarks>
         public Dictionary<string, byte[]> GetNameValuePairs()
         {
             var nameValuePairs = new Dictionary<string, byte[]>();
-            var stream = new MemoryStream(contentData);
+            var stream = new MemoryStream(ContentData);
 
             while(stream.Position < stream.Length)
             {
@@ -82,7 +107,7 @@ namespace FastCGI
         }
 
         /// <summary>
-        /// Sets the record content to a given dictionary of name-value pairs
+        /// Sets the record <see cref="ContentData"/> to a given dictionary of name-value pairs.
         /// </summary>
         public void SetNameValuePairs(Dictionary<string, byte[]> nameValuePairs)
         {
@@ -103,13 +128,16 @@ namespace FastCGI
                 stream.Write(value, 0, value.Length);
             }
 
-            contentLength = (int)stream.Length;
-            contentData = stream.GetBuffer();
+            ContentLength = (int)stream.Length;
+            ContentData = stream.GetBuffer();
         }
 
         /// <summary>
-        /// Reads a length from the stream, which is encoded in one or four bytes, as described in section 3.4 of the FastCGI specification.
+        /// Reads a length from the given stream, which is encoded in one or four bytes.
         /// </summary>
+        /// <remarks>
+        /// See section 3.4 of the FastCGI specification for details.
+        /// </remarks>
         static int ReadVarLength(Stream stream)
         {
             byte firstByte = ReadByte(stream);
@@ -127,6 +155,9 @@ namespace FastCGI
             }
         }
 
+        /// <summary>
+        /// Reads a single byte from the given stream.
+        /// </summary>
         static byte ReadByte(Stream stream)
         {
             int result = stream.ReadByte();
@@ -135,6 +166,9 @@ namespace FastCGI
             return (byte)result;
         }
 
+        /// <summary>
+        /// Reads a 16-bit integer from the given stream.
+        /// </summary>
         static Int16 ReadInt16(Stream stream)
         {
             byte h = ReadByte(stream);
@@ -142,12 +176,21 @@ namespace FastCGI
             return (short)(h * 256 + l);
         }
 
+        /// <summary>
+        /// Writes a 16-bit integer to the given stream.
+        /// </summary>
         static void WriteInt16(Stream stream, Int16 v)
         {
             stream.WriteByte((byte)(v/256));
             stream.WriteByte((byte)(v));
         }
 
+        /// <summary>
+        /// Writes a length from the given stream, which is encoded in one or four bytes.
+        /// </summary>
+        /// <remarks>
+        /// See section 3.4 of the FastCGI specification for details.
+        /// </remarks>
         static void WriteVarLength(Stream stream, int len)
         {
             if (len <= 127)
@@ -172,20 +215,20 @@ namespace FastCGI
             try
             {
 
-                r.version = ReadByte(stream);
-                r.type = (Record.RecordType)ReadByte(stream);
-                r.requestId = ReadInt16(stream);
-                r.contentLength = ReadInt16(stream); ;
+                r.Version = ReadByte(stream);
+                r.Type = (Record.RecordType)ReadByte(stream);
+                r.RequestId = ReadInt16(stream);
+                r.ContentLength = ReadInt16(stream); ;
                 byte paddingLength = ReadByte(stream);
 
                 // Skip reserved byte
                 ReadByte(stream);
 
-                r.contentData = new byte[r.contentLength];
+                r.ContentData = new byte[r.ContentLength];
 
                 // Read content
-                if(r.contentLength > 0)
-                    stream.Read(r.contentData, 0, r.contentLength);
+                if(r.ContentLength > 0)
+                    stream.Read(r.ContentData, 0, r.ContentLength);
 
                 // Skip padding data
                 if (paddingLength > 0)
@@ -210,20 +253,20 @@ namespace FastCGI
         /// <returns>Returns the number of bytes written.</returns>
         public int WriteToStream(Stream stream)
         {
-            stream.WriteByte(version);
-            stream.WriteByte((byte)type);
-            WriteInt16(stream, (Int16)requestId);
-            WriteInt16(stream, (Int16)contentLength);
+            stream.WriteByte(Version);
+            stream.WriteByte((byte)Type);
+            WriteInt16(stream, (Int16)RequestId);
+            WriteInt16(stream, (Int16)ContentLength);
 
             // No padding
             stream.WriteByte(0);
             // Reserved byte
             stream.WriteByte(0);
 
-            if(contentLength > 0)
-            stream.Write(contentData, 0, contentLength);
+            if(ContentLength > 0)
+            stream.Write(ContentData, 0, ContentLength);
 
-            return Constants.FCGI_HEADER_LEN + contentLength;
+            return Constants.FCGI_HEADER_LEN + ContentLength;
         }
 
         /// <summary>
@@ -233,10 +276,10 @@ namespace FastCGI
         {
             return new Record
             {
-                type = Record.RecordType.Stdout,
-                requestId = requestId,
-                contentLength = data.Length,
-                contentData = data
+                Type = Record.RecordType.Stdout,
+                RequestId = requestId,
+                ContentLength = data.Length,
+                ContentData = data
             };
         }
 
@@ -263,10 +306,10 @@ namespace FastCGI
 
             return new Record
             {
-                type = Record.RecordType.EndRequest,
-                requestId = requestId,
-                contentLength = content.Length,
-                contentData = content
+                Type = Record.RecordType.EndRequest,
+                RequestId = requestId,
+                ContentLength = content.Length,
+                ContentData = content
             };
         }
 
@@ -283,8 +326,8 @@ namespace FastCGI
 
             var record = new Record
             {
-                requestId = 0,
-                type = RecordType.GetValuesResult
+                RequestId = 0,
+                Type = RecordType.GetValuesResult
             };
 
             record.SetNameValuePairs(nameValuePairs);
@@ -294,7 +337,7 @@ namespace FastCGI
 
         public override string ToString()
         {
-            return "{Record type: " + type.ToString() + ", requestId: " + requestId.ToString() + "}";
+            return "{Record type: " + Type.ToString() + ", requestId: " + RequestId.ToString() + "}";
         }
     }
 }

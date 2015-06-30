@@ -1,17 +1,21 @@
 # FastCGI for .NET
 
-This is an incomplete implementation of [FastCGI](http://www.fastcgi.com/devkit/doc/fcgi-spec.html) for .NET, written in C#.
+This is an incomplete implementation of [FastCGI](http://www.fastcgi.com/devkit/doc/fcgi-spec.html) for .NET, written in C#. It implements the parts that are neccessary to build a simple web application using .NET.
 
-It implements the parts of FastCGI that are neccessary to build a simple web application using .NET.
+This means that you can write web applications in C# that serve dynamic content.
 
 ## Basic Usage
+
+The most common usage scenario is to use this library together with a web server like Apache and nginx. The web server will serve static content and forward HTTP requests for dynamic content to your application.
+
+Have a look at the FastCGI.FCGIApplication class for usage examples and more information.
 
 This code example shows how to create a FastCGI application and receive requests:
 
 ```csharp
     // Create a new FCGIApplication, will accept FastCGI requests
     var app = new FCGIApplication();
-    
+
     // Handle requests by responding with a 'Hello World' message
     app.OnRequestReceived += (sender, request) => {
         request.WriteBodyASCII("Content-Type:text/html\n\nHello World!");

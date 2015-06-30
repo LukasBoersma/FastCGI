@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("FastCGI")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("FastCGI for .NET")]
+[assembly: AssemblyDescription("https://github.com/LukasBoersma/FastCGI This is an incomplete implementation of FastCGI for .NET, written in C#. It implements the parts that are neccessary to build a simple web application using .NET.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Lukas Boersma")]
 [assembly: AssemblyProduct("FastCGI")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyCopyright("Copyright © Lukas Boersma  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
