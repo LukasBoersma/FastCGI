@@ -110,8 +110,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li><a href="http://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html">Apache documentation</a></li>
 </ul>
 <p>For nginx, add this to pass all requests to your <a class="el" href="namespace_fast_c_g_i.html">FastCGI</a> application: </p><pre class="fragment">location / {
+    include fastcgi_params;
     fastcgi_pass   127.0.0.1:19000;
-    include fastcgi_params
 }
 </pre><p>Where fastcgi_params is a file in your nginx config folder, containing something like: </p><pre class="fragment">fastcgi_param   QUERY_STRING            $query_string;
 fastcgi_param   REQUEST_METHOD          $request_method;

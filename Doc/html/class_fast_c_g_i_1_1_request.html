@@ -117,8 +117,8 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:aff47e7191a13fb1edfeb5b231dbbce33"><td class="memItemLeft" align="right" valign="top">Dictionary&lt; string, string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fast_c_g_i_1_1_request.html#aff47e7191a13fb1edfeb5b231dbbce33">Parameters</a></td></tr>
-<tr class="memdesc:aff47e7191a13fb1edfeb5b231dbbce33"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="namespace_fast_c_g_i.html">FastCGI</a> parameters passed by the webserver. Do not confuse with HTTP headers.  <a href="#aff47e7191a13fb1edfeb5b231dbbce33">More...</a><br /></td></tr>
+<tr class="memitem:aff47e7191a13fb1edfeb5b231dbbce33"><td class="memItemLeft" align="right" valign="top">Dictionary&lt; string, string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fast_c_g_i_1_1_request.html#aff47e7191a13fb1edfeb5b231dbbce33">Parameters</a> = new Dictionary&lt;string,string&gt;()</td></tr>
+<tr class="memdesc:aff47e7191a13fb1edfeb5b231dbbce33"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="namespace_fast_c_g_i.html">FastCGI</a> parameters passed by the webserver.  <a href="#aff47e7191a13fb1edfeb5b231dbbce33">More...</a><br /></td></tr>
 <tr class="separator:aff47e7191a13fb1edfeb5b231dbbce33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="properties"></a>
@@ -126,6 +126,9 @@ Properties</h2></td></tr>
 <tr class="memitem:ae5643dbf8ad041486a88fc64cc411cf9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fast_c_g_i_1_1_request.html#ae5643dbf8ad041486a88fc64cc411cf9">RequestId</a><code> [get]</code></td></tr>
 <tr class="memdesc:ae5643dbf8ad041486a88fc64cc411cf9"><td class="mdescLeft">&#160;</td><td class="mdescRight">The id for this request, issued by the webserver  <a href="#ae5643dbf8ad041486a88fc64cc411cf9">More...</a><br /></td></tr>
 <tr class="separator:ae5643dbf8ad041486a88fc64cc411cf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e978f083dab1af882778a3b1905bb93"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fast_c_g_i_1_1_request.html#a8e978f083dab1af882778a3b1905bb93">Body</a><code> [get]</code></td></tr>
+<tr class="memdesc:a8e978f083dab1af882778a3b1905bb93"><td class="mdescLeft">&#160;</td><td class="mdescRight">The request body.  <a href="#a8e978f083dab1af882778a3b1905bb93">More...</a><br /></td></tr>
+<tr class="separator:a8e978f083dab1af882778a3b1905bb93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A <a class="el" href="namespace_fast_c_g_i.html">FastCGI</a> request. </p>
@@ -231,16 +234,40 @@ Properties</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">Dictionary&lt;string, string&gt; FastCGI.Request.Parameters</td>
+          <td class="memname">Dictionary&lt;string, string&gt; FastCGI.Request.Parameters = new Dictionary&lt;string,string&gt;()</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>The <a class="el" href="namespace_fast_c_g_i.html">FastCGI</a> parameters passed by the webserver. Do not confuse with HTTP headers. </p>
+<p>The <a class="el" href="namespace_fast_c_g_i.html">FastCGI</a> parameters passed by the webserver. </p>
+<p>All strings are encoded in ASCII, regardless of any encoding information in the request. </p>
 
 </div>
 </div>
 <h2 class="groupheader">Property Documentation</h2>
+<a class="anchor" id="a8e978f083dab1af882778a3b1905bb93"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">string FastCGI.Request.Body</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">get</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The request body. </p>
+<p>For POST requests, this will contain the POST variables. For GET requests, this will be empty. </p>
+
+</div>
+</div>
 <a class="anchor" id="ae5643dbf8ad041486a88fc64cc411cf9"></a>
 <div class="memitem">
 <div class="memproto">

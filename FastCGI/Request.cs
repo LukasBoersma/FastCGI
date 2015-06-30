@@ -21,6 +21,7 @@ namespace FastCGI
         {
             this.RequestId = requestId;
             this.app = app;
+            Body = "";
         }
 
         FCGIApplication app;
@@ -31,9 +32,20 @@ namespace FastCGI
         public int RequestId { get; private set; }
         
         /// <summary>
-        /// The FastCGI parameters passed by the webserver. Do not confuse with HTTP headers.
+        /// The FastCGI parameters passed by the webserver.
         /// </summary>
-        public Dictionary<string, string> Parameters;
+        /// <remarks>
+        /// All strings are encoded in ASCII, regardless of any encoding information in the request.
+        /// </remarks>
+        public Dictionary<string, string> Parameters = new Dictionary<string,string>();
+
+        /// <summary>
+        /// The request body.
+        /// </summary>
+        /// <remarks>
+        /// For POST requests, this will contain the POST variables. For GET requests, this will be empty.
+        /// </remarks>
+        public string Body { get; private set; }
 
         /// <summary>
         /// Used internally. Feeds a <see cref="Record">Record</see> to this request for processing.
@@ -45,11 +57,20 @@ namespace FastCGI
             switch(record.Type)
             {
                 case Record.RecordType.Params:
-                    // Todo: Save parameters
-
+                    var parameters = record.GetNameValuePairs();
+                    foreach(var param in parameters)
+                    {
+                        Parameters.Add(param.Key, Encoding.ASCII.GetString(param.Value));
+                    }
                     break;
                 case Record.RecordType.Stdin:
-                    return true;
+                    string data = Encoding.ASCII.GetString(record.ContentData);
+                    Body += data;
+
+                    // Finished requests are indicated by an empty stdin record
+                    if (record.ContentLength == 0)
+                        return true;
+
                     break;
             }
 

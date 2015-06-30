@@ -48,8 +48,8 @@ Refer to your web server documentation for configuration details:
 For nginx, add this to pass all requests to your FastCGI application:
 
     location / {
+        include fastcgi_params;
         fastcgi_pass   127.0.0.1:19000;
-        include fastcgi_params
     }
 
 Where fastcgi_params is a file in your nginx config folder, containing something like:
