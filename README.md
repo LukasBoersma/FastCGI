@@ -1,5 +1,7 @@
 # FastCGI for .NET
 
+[![Build Status](https://travis-ci.org/LukasBoersma/FastCGI.svg)](https://travis-ci.org/LukasBoersma/FastCGI)
+
 This is an implementation of [FastCGI](http://www.fastcgi.com/devkit/doc/fcgi-spec.html) for .NET, written in C#. It implements the parts of the protocol that are necessary to build a simple web application using .NET.
 
 This means that you can write web applications in C# that serve dynamic content.
