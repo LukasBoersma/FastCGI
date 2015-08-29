@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://github.com/LukasBoersma/FastCGI/blob/master/LICENSE.txt</licenseUrl>
+    <projectUrl>https://github.com/LukasBoersma/FastCGI</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>FastCGI client library for .NET.</summary>
+    <description>FastCGI client library for .NET. This library provides an easy-to-use implementation of the parts of FastCGI that are neccessary to build a simple web application using .NET.</description>
+    <releaseNotes>Initial Release.</releaseNotes>
+    <copyright>Copyright 2015</copyright>
+  </metadata>
+</package>
