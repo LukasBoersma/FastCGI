@@ -126,7 +126,8 @@ namespace FastCGI
                     }
                 }
 
-                conn.Disconnect(true);
+                if(conn.Connected)
+                    conn.Disconnect(true);
             }
         }
         
