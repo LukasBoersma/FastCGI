@@ -268,7 +268,7 @@
             Reads a 16-bit integer from the given stream.
             </summary>
         </member>
-        <member name="M:FastCGI.Record.WriteInt16(System.IO.Stream,System.Int16)">
+        <member name="M:FastCGI.Record.WriteInt16(System.IO.Stream,System.UInt16)">
             <summary>
             Writes a 16-bit integer to the given stream.
             </summary>

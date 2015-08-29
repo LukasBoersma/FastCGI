@@ -18,6 +18,14 @@ If you think you found a bug, you can open an Issue on Github. If you make chang
 
 I am hosting the full API documentation here: [lukas-boersma.com/fastcgi-docs](https://lukas-boersma.com/fastcgi-docs/).
 
+## Nuget
+
+The library is available via [NuGet](https://www.nuget.org/packages/FastCGI/). To install, type this in the package manager console:
+
+```
+    Install-Package FastCGI
+```
+
 ## Basic usage
 
 The most common usage scenario is to use this library together with a web server like Apache and nginx. The web server will serve static content and forward HTTP requests for dynamic content to your application.
