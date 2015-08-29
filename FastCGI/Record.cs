@@ -169,20 +169,22 @@ namespace FastCGI
         /// <summary>
         /// Reads a 16-bit integer from the given stream.
         /// </summary>
-        static Int16 ReadInt16(Stream stream)
+        static UInt16 ReadInt16(Stream stream)
         {
             byte h = ReadByte(stream);
             byte l = ReadByte(stream);
-            return (short)(h * 256 + l);
+            return (UInt16)(h * 256 + l);
         }
 
         /// <summary>
         /// Writes a 16-bit integer to the given stream.
         /// </summary>
-        static void WriteInt16(Stream stream, Int16 v)
+        static void WriteInt16(Stream stream, UInt16 v)
         {
-            stream.WriteByte((byte)(v/256));
-            stream.WriteByte((byte)(v));
+            var b1 = (byte)(v / 256);
+            var b2 = (byte)(v);
+            stream.WriteByte(b1);
+            stream.WriteByte(b2);
         }
 
         /// <summary>
@@ -253,10 +255,13 @@ namespace FastCGI
         /// <returns>Returns the number of bytes written.</returns>
         public int WriteToStream(Stream stream)
         {
+            if (ContentLength > 65535)
+                throw new InvalidOperationException("Cannot send a record with more that 65535 bytes.");
+
             stream.WriteByte(Version);
             stream.WriteByte((byte)Type);
-            WriteInt16(stream, (Int16)RequestId);
-            WriteInt16(stream, (Int16)ContentLength);
+            WriteInt16(stream, (UInt16)RequestId);
+            WriteInt16(stream, (UInt16)ContentLength);
 
             // No padding
             stream.WriteByte(0);
@@ -264,7 +269,7 @@ namespace FastCGI
             stream.WriteByte(0);
 
             if(ContentLength > 0)
-            stream.Write(ContentData, 0, ContentLength);
+                stream.Write(ContentData, 0, ContentLength);
 
             return Constants.FCGI_HEADER_LEN + ContentLength;
         }

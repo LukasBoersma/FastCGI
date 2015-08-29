@@ -137,7 +137,7 @@ namespace FastCGI
         internal void SendRecord(Record r)
         {
             var memStr = new MemoryStream();
-            memStr.Capacity = 4096;
+            memStr.Capacity = r.ContentLength + Constants.FCGI_HEADER_LEN;
 
             int recordSize = r.WriteToStream(memStr);
             CurrentStream.Write(memStr.GetBuffer(), 0, recordSize);

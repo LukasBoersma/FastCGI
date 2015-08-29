@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -86,9 +87,38 @@ namespace FastCGI
         /// <param name="data">The data to append.</param>
         public void WriteResponse(byte[] data)
         {
-            // Todo: Handle data larger than 64KB
-            var record = Record.CreateStdout(data, RequestId);
-            app.SendRecord(record);
+            int remainingLength = data.Length;
+
+            // Send data with at most 65535 bytes in one record
+            if(remainingLength <= 65535)
+            {
+                var record = Record.CreateStdout(data, RequestId);
+                app.SendRecord(record);
+            }
+            // Split data with more than 64KB into multiple records
+            else
+            {
+                var buf64kb = new byte[65535];
+                int offset = 0;
+                while (remainingLength > 65535)
+                {
+                    Buffer.BlockCopy(data, offset, buf64kb, 0, 65535);
+
+                    var record = Record.CreateStdout(buf64kb, RequestId);
+                    app.SendRecord(record);
+
+                    offset += 65535;
+                    remainingLength -= 65535;
+                }
+
+                // Write the remaining data
+                byte[] remainingBuf = new byte[remainingLength];
+                Buffer.BlockCopy(data, offset, remainingBuf, 0, remainingLength);
+
+                var remainingRecord = Record.CreateStdout(buf64kb, RequestId);
+                app.SendRecord(remainingRecord);
+            }
+
         }
 
         /// <summary>
