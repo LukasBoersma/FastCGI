@@ -1,0 +1,6 @@
+language: csharp
+solution: FastCGI.sln
+install:
+  - nuget restore FastCGI.sln
+script:
+  - xbuild /p:Configuration=Release /p:TargetFrameworkVersion="v4.5" /p:ToolsVersion="4.0" FastCGI.sln
