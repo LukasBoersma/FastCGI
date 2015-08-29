@@ -17,7 +17,7 @@ namespace FastCGI
     /// </remarks>
     public class Request
     {
-        internal Request(int requestId, FCGIApplication app)
+        public Request(int requestId, FCGIApplication app)
         {
             this.RequestId = requestId;
             this.app = app;
