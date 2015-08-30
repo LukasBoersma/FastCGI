@@ -1,0 +1,6 @@
+site_name: FastCGI
+theme: readthedocs
+docs_dir: 'Doc/'
+pages:
+- 'User Guide': 'index.md'
+- 'API Reference': 'api_reference.md'
