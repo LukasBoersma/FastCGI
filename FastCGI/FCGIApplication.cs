@@ -21,7 +21,7 @@ namespace FastCGI
     /// In FastCGI terms, this class implements the responder role. Refer to section 6.2 of the FastCGI specification for details.
     /// 
     /// See the below example to learn how to accept requests. For more complex usage. have a look at the <see cref="Request"/> class.
-    /// If you need to go even deeper, see the <see cref="Record"/> class and read the FastCGI specification: http://www.fastcgi.com/devkit/doc/fcgi-spec.html
+    /// If you need to go even deeper, see the <see cref="Record"/> class and read the [FastCGI specification](http://www.fastcgi.com/devkit/doc/fcgi-spec.html)
     /// </remarks>
     /// <example>
     /// <code>

@@ -12,8 +12,9 @@ namespace FastCGI
     /// </summary>
     /// <remarks>
     /// A request usually corresponds to a HTTP request that has been received by the webserver.
-    /// You will probably want to use <see cref="WriteResponse"/> or its helper methods to output a response and then call <see cref="Close"/>.
-    /// Use <see cref="FCGIApplication.OnRequestReceived"/> to be notified of new requests.
+    /// 
+    /// You will probably want to use <see cref="WriteResponse"/> or its helper methods to output a response and then call <see cref="Close"/>. Use <see cref="FCGIApplication.OnRequestReceived"/> to be notified of new requests.
+    /// 
     /// Refer to the FastCGI specification for more details.
     /// </remarks>
     public class Request
