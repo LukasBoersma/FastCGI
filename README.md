@@ -22,9 +22,13 @@ I am hosting the full API documentation here: [lukas-boersma.com/fastcgi-docs](h
 
 The library is available via [NuGet](https://www.nuget.org/packages/FastCGI/). To install, type this in the package manager console:
 
-```
     Install-Package FastCGI
-```
+
+Or, using the command-line interface:
+
+    nuget install FastCGI
+
+For more information, refer to the [NuGet documentation](https://docs.nuget.org/consume).
 
 ## Basic usage
 
@@ -35,17 +39,17 @@ Have a look at the FastCGI.FCGIApplication class for usage examples and more inf
 This code example shows how to create a FastCGI application and receive requests:
 
 ```csharp
-    // Create a new FCGIApplication, will accept FastCGI requests
-    var app = new FCGIApplication();
+// Create a new FCGIApplication, will accept FastCGI requests
+var app = new FCGIApplication();
 
-    // Handle requests by responding with a 'Hello World' message
-    app.OnRequestReceived += (sender, request) => {
-        request.WriteBodyASCII("Content-Type:text/html\n\nHello World!");
-        request.Close();
-    };
-    
-    // Start listening on port 19000
-    app.Run(19000);
+// Handle requests by responding with a 'Hello World' message
+app.OnRequestReceived += (sender, request) => {
+    request.WriteBodyASCII("Content-Type:text/html\n\nHello World!");
+    request.Close();
+};
+
+// Start listening on port 19000
+app.Run(19000);
 ```
 
 ## Web server configuration
