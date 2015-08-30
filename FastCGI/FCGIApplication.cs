@@ -33,7 +33,6 @@ namespace FastCGI
     ///       request.WriteBodyASCII("Content-Type:text/html\n\nHello World!");
     ///       request.Close();
     ///   };
-
     ///   // Start listening on port 19000
     ///   app.Run(19000);
     /// </code>
