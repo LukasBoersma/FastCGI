@@ -1,28 +1,8 @@
 language: csharp
 solution: FastCGI.sln
-addons:
-  apt:
-    packages:
-	 - gtk-sharp2
 install:
   - nuget restore FastCGI.sln
   - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner
-  - nuget install coveralls.net -Version 0.6.0 -OutputDirectory coveralls
-  - nuget install Mono.Cecil -Version 0.9.6.1 -OutputDirectory cecil
-  - git clone --depth=50 git://github.com/csMACnz/monocov.git ./monocov
-  - cd ./monocov
-  - cp ../cecil/Mono.Cecil.0.9.6.1/lib/net45/Mono.Cecil.dll .
-  - ./configure
-  - make
-  - sudo make install
-  - cd ..
 script:
-  - xbuild /p:Configuration=Debug /p:TargetFrameworkVersion="v4.5" /p:ToolsVersion="4.0" FastCGI.sln
-  - export LD_LIBRARY_PATH=/usr/local/lib
-  - mono --debug --profile=monocov:outfile=FastCGI.cov,+FastCGI ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe --process=single --framework:net-4.5 ./FastCGI.Tests/bin/Debug/FastCGI.Tests.dll
-  - monocov --runtime=4.5  --export-xml=monocovCoverage FastCGI.cov
-  - REPO_COMMIT_AUTHOR=$(git show -s --pretty=format:"%cn")
-  - REPO_COMMIT_AUTHOR_EMAIL=$(git show -s --pretty=format:"%ce")
-  - REPO_COMMIT_MESSAGE=$(git show -s --pretty=format:"%s")
-  - secure: "Lz2jmU4WHXYrRAwO6Mj8KizFpQ/VZjmiFCn24qJoJzCrXpwxnJS7t4QI2GEgwXCA0EvC/9TXn02Rke4CfRbBJhDyernNZriN56sb/uTZhcXMNKm+PSIk94Z6SWuS0jd5WiO4iEM6B3bKoA636Fd/rvK41L8tDaS4HwB8YL6sUH95qZ5U5zUS47omOtdh2HSdjl15RoHux9kW6y1VBI00uSwDpJX2PgTdTgQwin0dcgimx0pxI4tm3k6V3+0GXGrpLPnI9f02gngXJJsUYdtYcXhIwFzr87tCr2hB6OOPmOyQYnOr//42NgkXxdPWsczuEg7lcLNg1oplM9fRQuGu6F49C2bXd+OM8z/QuEUF0EMNRRmvinakrdXpx9TYflheuxkpRuBDyvsnhfiIhK9r0u9sZKGdPXwsWA1grHDC7TMfdp9XLZjZALhMbD/iqFtqAT7qNPMBIo5o9JVguK9ECuDC3Adoq2SaCEfdGJsaei90y5641frq/oD6hJsybJxgZBYS2GAFSB6Nrpeu9FSweWbfEomgQJ7I/qSfXMpArqGBzrWTkAvAdvNj03MDwAY2nFyFTsZH4FoC7h9IkeVQLy0vkY3kCEu2cElBpAlC2oG8eWqelnLmeUJ+M/MFd2h3DOTlHVxWXUkHeOC5wRDQALJSu+akZZUBCNsBug8QvTU="
-  - mono ./coveralls/coveralls.net.0.6.0/tools/csmacnz.Coveralls.exe --monocov -i ./monocovCoverage --repoToken $COVERALLS_REPO_TOKEN --commitId $TRAVIS_COMMIT --commitBranch $TRAVIS_BRANCH --commitAuthor "$REPO_COMMIT_AUTHOR" --commitEmail "$REPO_COMMIT_AUTHOR_EMAIL" --commitMessage "$REPO_COMMIT_MESSAGE" --jobId $TRAVIS_JOB_ID  --serviceName travis-ci  --useRelativePaths
+  - xbuild /p:Configuration=Release /p:TargetFrameworkVersion="v4.5" /p:ToolsVersion="4.0" FastCGI.sln
+  - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ./FastCGI.Tests/bin/Debug/FastCGI.Tests.dll
