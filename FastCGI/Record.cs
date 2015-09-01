@@ -89,16 +89,26 @@ namespace FastCGI
 
             while(stream.Position < stream.Length)
             {
-                int nameLength = ReadVarLength(stream);
-                int valueLength = ReadVarLength(stream);
+                uint nameLength = ReadVarLength(stream);
+                uint valueLength = ReadVarLength(stream);
+
+                // .NET does not allow objects larger than 2GB
+                // (see https://msdn.microsoft.com/en-us/library/ms241064(VS.80).aspx )
+                // We do not make the effort to workaround this,
+                // but simply throw an error if we encounter sizes beyond this limit.
+                if (nameLength >= Int32.MaxValue ||
+                   valueLength >= Int32.MaxValue)
+                {
+                    throw new InvalidDataException("Cannot process values larger than 2GB.");
+                }
 
                 byte[] name = new byte[nameLength];
 
-                stream.Read(name, 0, nameLength);
+                stream.Read(name, 0, (int)nameLength);
 
                 byte[] value = new byte[valueLength];
 
-                stream.Read(value, 0, valueLength);
+                stream.Read(value, 0, (int)valueLength);
 
                 nameValuePairs.Add(Encoding.ASCII.GetString(name), value);
             }
@@ -121,8 +131,8 @@ namespace FastCGI
                 byte[] nameBuf = Encoding.ASCII.GetBytes(name);
                 byte[] value = nameValuePair.Value;
 
-                WriteVarLength(stream, nameBuf.Length);
-                WriteVarLength(stream, value.Length);
+                WriteVarLength(stream, (uint)nameBuf.Length);
+                WriteVarLength(stream, (uint)value.Length);
                 
                 stream.Write(nameBuf, 0, nameBuf.Length);
                 stream.Write(value, 0, value.Length);
@@ -138,7 +148,7 @@ namespace FastCGI
         /// <remarks>
         /// See section 3.4 of the FastCGI specification for details.
         /// </remarks>
-        static int ReadVarLength(Stream stream)
+        public static UInt32 ReadVarLength(Stream stream)
         {
             byte firstByte = ReadByte(stream);
             // length values < 127 are encoded in a single byte
@@ -151,7 +161,27 @@ namespace FastCGI
                 byte b2 = ReadByte(stream);
                 byte b1 = ReadByte(stream);
                 byte b0 = ReadByte(stream);
-                return 16777216 * firstByte + 65536 * b2 + 256 * b1 + b0;
+                return (uint)(16777216 * (0x7f & firstByte) + 65536 * b2 + 256 * b1 + b0);
+            }
+        }
+
+
+        /// <summary>
+        /// Writes a length from the given stream, which is encoded in one or four bytes.
+        /// </summary>
+        /// <remarks>
+        /// See section 3.4 of the FastCGI specification for details.
+        /// </remarks>
+        public static void WriteVarLength(Stream stream, UInt32 len)
+        {
+            if (len <= 127)
+                stream.WriteByte((byte)len);
+            else
+            {
+                stream.WriteByte((byte)(0x80 | len / 16777216));
+                stream.WriteByte((byte)(len / 65536));
+                stream.WriteByte((byte)(len / 256));
+                stream.WriteByte((byte)(len));
             }
         }
 
@@ -169,7 +199,7 @@ namespace FastCGI
         /// <summary>
         /// Reads a 16-bit integer from the given stream.
         /// </summary>
-        static UInt16 ReadInt16(Stream stream)
+        public static UInt16 ReadInt16(Stream stream)
         {
             byte h = ReadByte(stream);
             byte l = ReadByte(stream);
@@ -179,31 +209,12 @@ namespace FastCGI
         /// <summary>
         /// Writes a 16-bit integer to the given stream.
         /// </summary>
-        static void WriteInt16(Stream stream, UInt16 v)
+        public static void WriteInt16(Stream stream, UInt16 v)
         {
             var b1 = (byte)(v / 256);
             var b2 = (byte)(v);
             stream.WriteByte(b1);
             stream.WriteByte(b2);
-        }
-
-        /// <summary>
-        /// Writes a length from the given stream, which is encoded in one or four bytes.
-        /// </summary>
-        /// <remarks>
-        /// See section 3.4 of the FastCGI specification for details.
-        /// </remarks>
-        static void WriteVarLength(Stream stream, int len)
-        {
-            if (len <= 127)
-                stream.WriteByte((byte)len);
-            else
-            {
-                stream.WriteByte((byte)(len / 16777216));
-                stream.WriteByte((byte)(len / 65536));
-                stream.WriteByte((byte)(len / 256));
-                stream.WriteByte((byte)(len));
-            }
         }
 
         /// <summary>
