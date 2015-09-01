@@ -36,8 +36,8 @@ namespace FastCGI.Tests
             foreach (var kvp in bytesByValue)
             {
                 var number = kvp.Key;
-                var bytes = kvp.Value;
-                var stream = new MemoryStream(2);
+                var expectedBytes = kvp.Value;
+                var stream = new MemoryStream(expectedBytes.Length);
 
                 // Write the number to a stream with WriteInt16.
                 Record.WriteInt16(stream, number);
@@ -52,7 +52,7 @@ namespace FastCGI.Tests
                 // Make sure that:
                 
                 // a) The bytes are correctly encoded
-                Assert.AreEqual(bytes, result);
+                Assert.AreEqual(expectedBytes, result);
 
                 // b) ReadInt16 decodes the correct number from the bytes
                 stream.Seek(0, SeekOrigin.Begin);
@@ -65,7 +65,6 @@ namespace FastCGI.Tests
         public void Records_ByteConversion_VarLength()
         {
             // Tests for Record.ReadVarLength and Record.WriteVarLength
-            // Values should be encoded in big-endian mode.
             // Test some numbers and make sure that both read and write
             // produce the expected results.
 
@@ -92,7 +91,7 @@ namespace FastCGI.Tests
             {
                 var number = kvp.Key;
                 var expectedBytes = kvp.Value;
-                var stream = new MemoryStream(2);
+                var stream = new MemoryStream(expectedBytes.Length);
 
                 // Write the number to a stream with WriteVarLength.
                 Record.WriteVarLength(stream, number);
@@ -109,7 +108,7 @@ namespace FastCGI.Tests
                 // a) The bytes are correctly encoded
                 Assert.AreEqual(expectedBytes, result);
 
-                // b) ReadInt16 decodes the correct number from the bytes
+                // b) ReadVarLength decodes the correct number from the bytes
                 stream.Seek(0, SeekOrigin.Begin);
                 var read = Record.ReadVarLength(stream);
                 Assert.AreEqual(number, read);

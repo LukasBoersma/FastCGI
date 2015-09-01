@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using System.IO;
+using System.Globalization;
 
 namespace FastCGI
 {
@@ -87,7 +88,7 @@ namespace FastCGI
             var nameValuePairs = new Dictionary<string, byte[]>();
             var stream = new MemoryStream(ContentData);
 
-            while(stream.Position < stream.Length)
+            while (stream.Position < stream.Length)
             {
                 uint nameLength = ReadVarLength(stream);
                 uint valueLength = ReadVarLength(stream);
@@ -133,13 +134,15 @@ namespace FastCGI
 
                 WriteVarLength(stream, (uint)nameBuf.Length);
                 WriteVarLength(stream, (uint)value.Length);
-                
+
                 stream.Write(nameBuf, 0, nameBuf.Length);
                 stream.Write(value, 0, value.Length);
             }
 
+            ContentData = new byte[stream.Length];
             ContentLength = (int)stream.Length;
-            ContentData = stream.GetBuffer();
+            stream.Seek(0, SeekOrigin.Begin);
+            stream.Read(ContentData, 0, (int)stream.Length);
         }
 
         /// <summary>
@@ -336,8 +339,9 @@ namespace FastCGI
         {
             var nameValuePairs = new Dictionary<string, byte[]>();
 
-            nameValuePairs.Add(Constants.FCGI_MAX_CONNS, Encoding.ASCII.GetBytes(maxConnections.ToString()));
-            nameValuePairs.Add(Constants.FCGI_MAX_REQS, Encoding.ASCII.GetBytes(maxRequests.ToString()));
+            // Names and values are encoded as strings.
+            nameValuePairs.Add(Constants.FCGI_MAX_CONNS, Encoding.ASCII.GetBytes(maxConnections.ToString(CultureInfo.InvariantCulture)));
+            nameValuePairs.Add(Constants.FCGI_MAX_REQS, Encoding.ASCII.GetBytes(maxRequests.ToString(CultureInfo.InvariantCulture)));
             nameValuePairs.Add(Constants.FCGI_MPXS_CONNS, Encoding.ASCII.GetBytes(multiplexing ? "1" : "0"));
 
             var record = new Record
@@ -355,5 +359,25 @@ namespace FastCGI
         {
             return "{Record type: " + Type.ToString() + ", requestId: " + RequestId.ToString() + "}";
         }
+
+        public override bool Equals(System.Object obj)
+        {
+            if (obj == null)
+            {
+                return false;
+            }
+
+            Record r = obj as Record;
+            if (r == null)
+            {
+                return false;
+            }
+
+            return Version == r.Version
+                && Type == r.Type
+                && RequestId == r.RequestId
+                && ContentLength == r.ContentLength
+                && ContentData.SequenceEqual(r.ContentData);
+    }
     }
 }
