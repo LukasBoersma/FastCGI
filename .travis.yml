@@ -1,5 +1,9 @@
 language: csharp
 solution: FastCGI.sln
+addons:
+  apt:
+    packages:
+	 - gtk-sharp2
 install:
   - nuget restore FastCGI.sln
   - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner
