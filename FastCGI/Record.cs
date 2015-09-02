@@ -230,8 +230,11 @@ namespace FastCGI
 
             try
             {
-
                 r.Version = ReadByte(stream);
+
+                if (r.Version != Constants.FCGI_VERSION_1)
+                    throw new InvalidDataException("Invalid version number in FastCGI record header. Possibly corrupted data.");
+
                 r.Type = (Record.RecordType)ReadByte(stream);
                 r.RequestId = ReadInt16(stream);
                 r.ContentLength = ReadInt16(stream); ;

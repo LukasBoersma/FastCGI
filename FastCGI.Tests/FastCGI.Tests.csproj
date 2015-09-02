@@ -53,6 +53,7 @@
     <Compile Include="Records.cs" />
     <Compile Include="Records_ByteConversion.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="FCGIApp.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

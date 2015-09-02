@@ -160,7 +160,7 @@ namespace FastCGI
             WriteResponse(Encoding.ASCII.GetBytes(""));
             var record = Record.CreateEndRequest(RequestId);
             app.SendRecord(record);
-            app.Disconnecting = true;
+            app.RequestFinished = true;
         }
     }
 }

@@ -55,12 +55,12 @@ namespace FastCGI
         /// <summary>
         /// True iff this application is currently connected to a webserver.
         /// </summary>
-        public bool Connected { get { return CurrentStream != null && !Disconnecting; } }
+        public bool Connected { get { return CurrentStream != null && !RequestFinished; } }
 
         /// <summary>
         /// True iff this application is about to close the connection to the webserver.
         /// </summary>
-        public bool Disconnecting = false;
+        public bool RequestFinished = false;
 
         /// <summary>
         /// Will be called whenever a request has been received.
@@ -71,62 +71,119 @@ namespace FastCGI
         /// </remarks>
         public event EventHandler<Request> OnRequestReceived = null;
 
+        Socket ListeningSocket;
+        Socket CurrentConnection;
+
+        /// <summary>
+        /// Indicates whether the current connection should be closed after the next request is closed.
+        /// </summary>
+        bool KeepConnection = false;
+
+        public void Listen(int port)
+        {
+            ListeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            ListeningSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+            ListeningSocket.ReceiveTimeout = 5000;
+            ListeningSocket.SendTimeout = 5000;
+            ListeningSocket.Listen(1);
+        }
+
+        public void Process()
+        {
+            if(CurrentConnection == null || !CurrentConnection.Connected)
+            {
+                CurrentConnection = ListeningSocket.Accept();
+                CurrentConnection.ReceiveTimeout = 5000;
+                CurrentConnection.SendTimeout = 5000;
+                var stream = new NetworkStream(CurrentConnection);
+                stream.ReadTimeout = 5000;
+                stream.WriteTimeout = 5000;
+
+                CurrentStream = stream;
+
+                RequestFinished = false;
+                KeepConnection = false;
+            }
+
+            Record r = Record.ReadRecord(CurrentStream);
+
+            // Invalid record? Close connection.
+            // Todo: Is this the correct behavior?
+            if (r == null)
+            {
+                CurrentConnection.Disconnect(true);
+                return;
+            }
+
+            if (r.Type == Record.RecordType.BeginRequest)
+            {
+                if (OpenRequests.ContainsKey(r.RequestId))
+                    OpenRequests.Remove(r.RequestId);
+
+                var content = new MemoryStream(r.ContentData);
+
+                var role = Record.ReadInt16(content);
+                // Todo: Refuse requests for other roles than FCGI_RESPONDER
+
+                var flags = content.ReadByte();
+                if ((flags & Constants.FCGI_KEEP_CONN) != 0)
+                    KeepConnection = true;
+
+                var request = new Request(r.RequestId, this);
+                OpenRequests.Add(request.RequestId, request);
+            }
+            else if (r.Type == Record.RecordType.AbortRequest || r.Type == Record.RecordType.EndRequest)
+            {
+                OpenRequests.Remove(r.RequestId);
+            }
+            else if (r.Type == Record.RecordType.GetValues)
+            {
+                var getValuesResult = Record.CreateGetValuesResult(1, 1, false);
+                SendRecord(getValuesResult);
+            }
+            else
+            {
+                if (OpenRequests.ContainsKey(r.RequestId))
+                {
+                    var request = OpenRequests[r.RequestId];
+                    bool requestReady = request.HandleRecord(r);
+                    if (requestReady)
+                    {
+                        var evh = OnRequestReceived;
+                        if (evh != null)
+                            OnRequestReceived(this, request);
+                    }
+                }
+            }
+            
+            if (!KeepConnection && CurrentConnection.Connected && RequestFinished)
+                CurrentConnection.Disconnect(true);
+        }
+
+        public void StopListening()
+        {
+            if (CurrentConnection != null && CurrentConnection.Connected)
+            {
+                CurrentConnection.Disconnect(true);
+                CurrentConnection = null;
+            }
+
+            if(ListeningSocket != null)
+            {
+                ListeningSocket.Close();
+                ListeningSocket = null;
+            }
+        }
         /// <summary>
         /// This method never returns! Starts listening for FastCGI requests on the given port.
         /// </summary>
         public void Run(int port)
         {
-            var sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            sock.Bind(new IPEndPoint(IPAddress.Loopback, port));
-            sock.Listen(1);
+            Listen(port);
 
             while (true)
             {
-                var conn = sock.Accept();
-                var stream = new NetworkStream(conn);
-                CurrentStream = stream;
-
-                Disconnecting = false;
-
-                while (conn.Connected && !Disconnecting)
-                {
-                    Record r = Record.ReadRecord(stream);
-
-                    // Invalid record? Close connection.
-                    // Todo: Is this the correct behavior?
-                    if (r == null)
-                    {
-                        conn.Disconnect(true);
-                        continue;
-                    }
-
-                    if(r.Type == Record.RecordType.BeginRequest)
-                    {
-                        if (OpenRequests.ContainsKey(r.RequestId))
-                            OpenRequests.Remove(r.RequestId);
-
-                        var request = new Request(r.RequestId, this);
-                        OpenRequests.Add(request.RequestId, request);
-                    }
-                    else if (r.Type == Record.RecordType.AbortRequest || r.Type == Record.RecordType.EndRequest)
-                    {
-                        OpenRequests.Remove(r.RequestId);
-                    }
-                    else
-                    {
-                        var request = OpenRequests[r.RequestId];
-                        bool requestReady = request.HandleRecord(r);
-                        if(requestReady)
-                        {
-                            var evh = OnRequestReceived;
-                            if (evh != null)
-                                OnRequestReceived(this, request);
-                        }
-                    }
-                }
-
-                if(conn.Connected)
-                    conn.Disconnect(true);
+                Process();
             }
         }
         
