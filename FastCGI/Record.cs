@@ -77,16 +77,15 @@ namespace FastCGI
         public byte[] ContentData;
 
         /// <summary>
-        /// Tries to read a dictionary of name-value pairs from the record content.
+        /// Tries to read a dictionary of name-value pairs from the given stream
         /// </summary>
         /// <remarks>
         /// This method does not make any attempt to make sure whether this record actually contains a set of name-value pairs.
         /// It will return nonsense or throw an EndOfStreamException if the record content does not contain valid name-value pairs.
         /// </remarks>
-        public Dictionary<string, byte[]> GetNameValuePairs()
+        public static Dictionary<string, byte[]> ReadNameValuePairs(Stream stream)
         {
             var nameValuePairs = new Dictionary<string, byte[]>();
-            var stream = new MemoryStream(ContentData);
 
             while (stream.Position < stream.Length)
             {
@@ -115,6 +114,11 @@ namespace FastCGI
             }
 
             return nameValuePairs;
+        }
+
+        public Dictionary<string, byte[]> GetNameValuePairs()
+        {
+            return ReadNameValuePairs(new MemoryStream(ContentData));
         }
 
         /// <summary>
@@ -223,14 +227,27 @@ namespace FastCGI
         /// <summary>
         /// Reads a single Record from the given stream.
         /// </summary>
-        /// <returns>Returns the retreived record or null if no record could be read.</returns>
+        /// <remarks>
+        /// Returns the retreived record or null if no record could be read.
+        /// Will block if a partial record is on the stream, until the full record has arrived or a timeout occurs.
+        /// </remarks>
         public static Record ReadRecord(Stream stream)
         {
             Record r = new Record();
 
             try
             {
-                r.Version = ReadByte(stream);
+                // Try to read a byte from the stream
+                int firstByte = stream.ReadByte();
+
+                // Reached end of stream?
+                if (firstByte == -1)
+                    return null;
+
+                // Otherwise, that first byte should be the version byte of a record.
+                // We now assume that we can safely read the rest of the record.
+                // If the rest of the record has not yet been received, it should follow soon.
+                r.Version = (byte)firstByte;
 
                 if (r.Version != Constants.FCGI_VERSION_1)
                     throw new InvalidDataException("Invalid version number in FastCGI record header. Possibly corrupted data.");
@@ -356,6 +373,18 @@ namespace FastCGI
             record.SetNameValuePairs(nameValuePairs);
 
             return record;
+        }
+
+        /// <summary>
+        /// Used internally. Writes the record to the given stream. Used for sending records to the webserver.
+        /// </summary>
+        public void Send(Stream stream)
+        {
+            var memStr = new MemoryStream();
+            memStr.Capacity = ContentLength + Constants.FCGI_HEADER_LEN;
+
+            int recordSize = WriteToStream(memStr);
+            stream.Write(memStr.GetBuffer(), 0, recordSize);
         }
 
         public override string ToString()

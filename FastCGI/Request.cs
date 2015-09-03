@@ -11,35 +11,61 @@ namespace FastCGI
     /// A FastCGI request.
     /// </summary>
     /// <remarks>
-    /// A request usually corresponds to a HTTP request that has been received by the webserver.
+    /// A request usually corresponds to a HTTP request that has been received by the webserver (see the [FastCGI specification](http://www.fastcgi.com/devkit/doc/fcgi-spec.html) for details).
     /// 
     /// You will probably want to use <see cref="WriteResponse"/> or its helper methods to output a response and then call <see cref="Close"/>. Use <see cref="FCGIApplication.OnRequestReceived"/> to be notified of new requests.
     /// 
-    /// Refer to the FastCGI specification for more details.
+    /// Remember to call <see cref="Close"/> when you wrote the complete response. 
     /// </remarks>
     public class Request
     {
-        public Request(int requestId, FCGIApplication app)
+        /// <summary>
+        /// Creates a new request. Usually, you don't need to call this.
+        /// </summary>
+        /// <remarks> Records are created by <see cref="FCGIApplication"/> when a new request has been received.</remarks>
+        public Request(int requestId, Stream responseStream, FCGIApplication app = null)
         {
             this.RequestId = requestId;
-            this.app = app;
             Body = "";
+            ResponseStream = responseStream;
+            ParamStream = new MemoryStream();
+            ManagingApp = app;
         }
 
-        FCGIApplication app;
+        /// <summary>
+        /// The stream where responses to this request should be written to.
+        /// Only write FastCGI records here, not the raw response body. Use <see cref="WriteResponse"/> for sending response data.
+        /// </summary>
+        Stream ResponseStream;
+
+        /// <summary>
+        /// The FCGIApplication that manages this requests. Can be null if this request is not associated with any FCGIApplication.
+        /// </summary>
+        /// <remarks>The request will notify this app about certain events, for example when the request is closed.</remarks>
+        FCGIApplication ManagingApp;
 
         /// <summary>
         /// The id for this request, issued by the webserver
         /// </summary>
         public int RequestId { get; private set; }
-        
+
         /// <summary>
-        /// The FastCGI parameters passed by the webserver.
+        /// The FastCGI parameters received by the webserver, in raw byte arrays.
         /// </summary>
         /// <remarks>
-        /// All strings are encoded in ASCII, regardless of any encoding information in the request.
+        /// Use <see cref="GetParameterASCII(string)"/> and <see cref="GetParameterUTF8(string)"/> to get strings instead of byte arrays.
         /// </remarks>
-        public Dictionary<string, string> Parameters = new Dictionary<string,string>();
+        public Dictionary<string, byte[]> Parameters = new Dictionary<string, byte[]>();
+
+        public string GetParameterASCII(string name)
+        {
+            return Encoding.ASCII.GetString(Parameters[name]);
+        }
+
+        public string GetParameterUTF8(string name)
+        {
+            return Encoding.UTF8.GetString(Parameters[name]);
+        }
 
         /// <summary>
         /// The request body.
@@ -48,6 +74,11 @@ namespace FastCGI
         /// For POST requests, this will contain the POST variables. For GET requests, this will be empty.
         /// </remarks>
         public string Body { get; private set; }
+
+        /// <summary>
+        /// Incoming parameter records are stored here, until the parameter stream is closed by the webserver by sending an empty param record.
+        /// </summary>
+        MemoryStream ParamStream;
 
         /// <summary>
         /// Used internally. Feeds a <see cref="Record">Record</see> to this request for processing.
@@ -59,10 +90,16 @@ namespace FastCGI
             switch(record.Type)
             {
                 case Record.RecordType.Params:
-                    var parameters = record.GetNameValuePairs();
-                    foreach(var param in parameters)
+
+                    if (record.ContentLength == 0)
                     {
-                        Parameters.Add(param.Key, Encoding.ASCII.GetString(param.Value));
+                        ParamStream.Seek(0, SeekOrigin.Begin);
+                        Parameters = Record.ReadNameValuePairs(ParamStream);
+                    }
+                    else
+                    {
+                        // If the params are not yet finished, write the contents to the ParamStream.
+                        ParamStream.Write(record.ContentData, 0, record.ContentLength);
                     }
                     break;
                 case Record.RecordType.Stdin:
@@ -94,7 +131,7 @@ namespace FastCGI
             if(remainingLength <= 65535)
             {
                 var record = Record.CreateStdout(data, RequestId);
-                app.SendRecord(record);
+                record.Send(ResponseStream);
             }
             // Split data with more than 64KB into multiple records
             else
@@ -106,7 +143,7 @@ namespace FastCGI
                     Buffer.BlockCopy(data, offset, buf64kb, 0, 65535);
 
                     var record = Record.CreateStdout(buf64kb, RequestId);
-                    app.SendRecord(record);
+                    record.Send(ResponseStream);
 
                     offset += 65535;
                     remainingLength -= 65535;
@@ -116,8 +153,8 @@ namespace FastCGI
                 byte[] remainingBuf = new byte[remainingLength];
                 Buffer.BlockCopy(data, offset, remainingBuf, 0, remainingLength);
 
-                var remainingRecord = Record.CreateStdout(buf64kb, RequestId);
-                app.SendRecord(remainingRecord);
+                var remainingRecord = Record.CreateStdout(remainingBuf, RequestId);
+                remainingRecord.Send(ResponseStream);
             }
 
         }
@@ -157,10 +194,13 @@ namespace FastCGI
         /// </summary>
         public void Close()
         {
-            WriteResponse(Encoding.ASCII.GetBytes(""));
+            WriteResponse(new byte[0]);
             var record = Record.CreateEndRequest(RequestId);
-            app.SendRecord(record);
-            app.RequestFinished = true;
+            record.Send(ResponseStream);
+
+            if (ManagingApp != null)
+                ManagingApp.RequestClosed(this);
         }
+
     }
 }
