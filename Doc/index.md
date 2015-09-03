@@ -6,6 +6,8 @@ This is an implementation of [FastCGI](http://www.fastcgi.com/devkit/doc/fcgi-sp
 
 This means that you can write web applications in C# that serve dynamic content.
 
+This project is hosted on [Github](https://github.com/LukasBoersma/FastCGI).
+
 ## Basic usage
 
 The most common usage scenario is to use this library together with a web server like Apache and nginx. The web server will serve static content and forward HTTP requests for dynamic content to your application.
@@ -50,11 +52,13 @@ For more information, refer to the [NuGet documentation](https://docs.nuget.org/
 
 ## License and contributing
 
-This software is distributed under the terms of the MIT license. You can use it for your own projects for free under the conditions specified in LICENSE.txt. 
+This software is distributed under the terms of the MIT license.
+You can use it for your own projects for free under the conditions specified in [LICENSE.txt](https://raw.githubusercontent.com/LukasBoersma/FastCGI/master/LICENSE.txt).
+The full source code is available on [Github](https://github.com/LukasBoersma/FastCGI).
 
 If you have questions, feel free to contact me. Visit [lukas-boersma.com](https://lukas-boersma.com) for my contact details.
 
-If you think you found a bug, you can open an Issue on Github. If you make changes to this library, I would be happy about a pull request.
+If you think you found a bug, you can open an Issue on [Github](https://github.com/LukasBoersma/FastCGI). If you make changes to this library, I would be happy about a pull request.
 
 ## Web server configuration
 
