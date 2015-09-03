@@ -19,7 +19,9 @@ you can also call [ProcessSingleRecord](#FastCGI.FCGIApplication.ProcessSingleRe
 
 See the below example to learn how to accept requests.
 For more detailed information, have a look at the [Request](#FastCGI.Request) class.
-If you need to fiddle with the FastCGI packets itself, see the [Record](#FastCGI.Record) class and read the [FastCGI specification](http://www.fastcgi.com/devkit/doc/fcgi-spec.html)
+
+If you need to fiddle with the FastCGI packets itself, see the [Record](#FastCGI.Record) class and read the
+[FastCGI specification](http://www.fastcgi.com/devkit/doc/fcgi-spec.html).
 
 **Examples**
 
@@ -30,11 +32,12 @@ var app = new FCGIApplication();
             
 // Handle requests by responding with a 'Hello World' message
 app.OnRequestReceived += (sender, request) => {
-    request.WriteBodyASCII("Content-Type:text/html\n\nHello World!");
+    request.WriteResponseASCII("Content-Type:text/html\n\nHello World!");
     request.Close();
 };
 // Start listening on port 19000
 app.Run(19000);
+
 // You now need a webserver like nginx or Apache to pass incoming requests
 // via FastCGI to your application.
 ```
@@ -84,6 +87,9 @@ Returns true if a record was read, false otherwise.
 <a id="FastCGI.FCGIApplication.Run(System.Int32)"></a>
 
 * *void* **Run** *(int port)*  
+  This method never returns! Starts listening for FastCGI requests on the given port.  
+  Use [OnRequestReceived](#FastCGI.FCGIApplication.OnRequestReceived) to react to incoming requests.
+Internally, this simply calls [Listen](#FastCGI.FCGIApplication.Listen(System.Int32)) and enters an infinite loop of [Process](#FastCGI.FCGIApplication.Process) calls.
 
 
 **Events**
@@ -274,10 +280,12 @@ Remember to call [Close](#FastCGI.Request.Close) when you wrote the complete res
 <a id="FastCGI.Request.GetParameterASCII(System.String)"></a>
 
 * *string* **GetParameterASCII** *(string name)*  
+  Returns the parameter with the given name as an ASCII encoded string.  
 
 <a id="FastCGI.Request.GetParameterUTF8(System.String)"></a>
 
 * *string* **GetParameterUTF8** *(string name)*  
+  Returns the parameter with the given name as an UTF-8 encoded string.  
 
 <a id="FastCGI.Request.WriteResponse(System.Byte[])"></a>
 
