@@ -16,7 +16,9 @@ If you think you found a bug, you can open an Issue on Github. If you make chang
 
 ## Documentation
 
-I am hosting the full API documentation here: [lukas-boersma.com/fastcgi-docs](https://lukas-boersma.com/fastcgi-docs/).
+The project documentation is hosted here: [fastcgi-for-net.readthedocs.org](http://fastcgi-for-net.readthedocs.org/en/latest/)
+
+The user guide is mostly the same as this readme. [Here is a direct link to the API reference](http://fastcgi-for-net.readthedocs.org/en/latest/api_reference).
 
 ## Nuget
 
