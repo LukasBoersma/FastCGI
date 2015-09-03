@@ -32,7 +32,9 @@ namespace FastCGI
     /// 
     /// See the below example to learn how to accept requests.
     /// For more detailed information, have a look at the <see cref="Request"/> class.
-    /// If you need to fiddle with the FastCGI packets itself, see the <see cref="Record"/> class and read the [FastCGI specification](http://www.fastcgi.com/devkit/doc/fcgi-spec.html)
+    /// 
+    /// If you need to fiddle with the FastCGI packets itself, see the <see cref="Record"/> class and read the
+    /// [FastCGI specification](http://www.fastcgi.com/devkit/doc/fcgi-spec.html).
     /// </remarks>
     /// 
     /// <example>
@@ -47,6 +49,7 @@ namespace FastCGI
     /// };
     /// // Start listening on port 19000
     /// app.Run(19000);
+    /// 
     /// // You now need a webserver like nginx or Apache to pass incoming requests
     /// // via FastCGI to your application.
     /// </code>
@@ -280,7 +283,7 @@ namespace FastCGI
         /// <remarks>
         /// Use <see cref="OnRequestReceived"/> to react to incoming requests.
         /// Internally, this simply calls <see cref="Listen(int)"/> and enters an infinite loop of <see cref="Process()"/> calls.
-        /// /remarks>
+        /// </remarks>
         public void Run(int port)
         {
             Listen(port);

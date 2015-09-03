@@ -57,11 +57,17 @@ namespace FastCGI
         /// </remarks>
         public Dictionary<string, byte[]> Parameters = new Dictionary<string, byte[]>();
 
+        /// <summary>
+        /// Returns the parameter with the given name as an ASCII encoded string.
+        /// </summary>
         public string GetParameterASCII(string name)
         {
             return Encoding.ASCII.GetString(Parameters[name]);
         }
 
+        /// <summary>
+        /// Returns the parameter with the given name as an UTF-8 encoded string.
+        /// </summary>
         public string GetParameterUTF8(string name)
         {
             return Encoding.UTF8.GetString(Parameters[name]);
