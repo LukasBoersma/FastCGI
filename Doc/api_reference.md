@@ -5,7 +5,7 @@ Main FastCGI listener class.
 
 This class manages a connection to a webserver by listening on a given port on localhost and receiving FastCGI
 requests by a webserver like Apache or nginx.
-            
+
 In FastCGI terms, this class implements the responder role. Refer to section 6.2 of the FastCGI specification
 for details.
 
@@ -109,6 +109,12 @@ This means that this event may fire multiple times before you call [Request.Clos
 
 * *bool* **Connected**  
   True iff this application is currently connected to a webserver.  
+
+
+<a id="FastCGI.FCGIApplication.Timeout"></a>
+
+* *int* **Timeout**  
+  The read/write timeouts in miliseconds for the listening socket, the connections, and the streams.  
 
 
 
