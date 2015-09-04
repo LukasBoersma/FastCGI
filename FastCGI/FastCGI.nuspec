@@ -10,8 +10,8 @@
     <projectUrl>https://github.com/LukasBoersma/FastCGI</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>FastCGI client library for .NET.</summary>
-    <description>FastCGI client library for .NET. This library provides an easy-to-use implementation of the parts of FastCGI that are neccessary to build a simple web application using .NET.</description>
+    <description>FastCGI client library for .NET. This library provides easy-to-use functions to build a web applications with .NET.</description>
     <releaseNotes>Initial Release.</releaseNotes>
-    <copyright>Copyright 2015</copyright>
+    <copyright>Copyright Lukas Boersma 2015</copyright>
   </metadata>
 </package>
