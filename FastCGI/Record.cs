@@ -276,7 +276,11 @@ namespace FastCGI
             }
             catch (EndOfStreamException e)
             {
-                // Connection has been closed while reading a Record. Return a null record.
+                throw new InvalidDataException("Unexpected end of stream. Incomplete record transmitted or corrupted data.");
+            }
+            catch (IOException e)
+            {
+                // Connection has been closed, or an other error occured whie reading a record. Return a null record.
                 return null;
             }
 

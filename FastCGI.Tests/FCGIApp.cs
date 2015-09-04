@@ -342,5 +342,113 @@ namespace FastCGI.Tests
             Assert.LessOrEqual(responseMultiplexing, 1);
         }
 
+        [Test]
+        public void FCGIApp_DisconnectedOperations()
+        {
+            // Create a new FCGIApplication without opening a connection
+            // and make sure everything can be called without any problems
+            var app = new FCGIApplication();
+
+            Assert.IsFalse(app.Process());
+            Assert.IsFalse(app.ProcessStream(new MemoryStream(), new MemoryStream()));
+            Assert.IsFalse(app.ProcessSingleRecord(new MemoryStream(), new MemoryStream()));
+            Assert.IsFalse(app.Connected);
+            Assert.IsNull(app.CurrentStream);
+
+            app.StopListening();
+        }
+
+        [Test]
+        public void FCGIApp_Connections()
+        {
+            // Create an app that actually listens on the loopback interface
+            var app = new FCGIApplication();
+            app.Timeout = 100;
+
+            try
+            {
+                app.Listen(new IPEndPoint(IPAddress.Loopback, 21511));
+                Request receivedRequest = null;
+                app.OnRequestReceived += (sender, request) => {
+                    receivedRequest = request;
+                    request.WriteResponseASCII("Hello Server!");
+                    request.Close();
+                };
+
+                app.Process();
+
+                var serverSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                var asyncResult = serverSocket.BeginConnect(new IPEndPoint(IPAddress.Loopback, 21511), (r) => { }, null);
+
+                while(!asyncResult.IsCompleted)
+                    app.Process();
+
+                serverSocket.EndConnect(asyncResult);
+
+                var serverStream = new NetworkStream(serverSocket);
+
+                // Now send a request to the app and make sure it is received correctly.
+
+                var requestId = 5172;
+
+                var beginRequestContent = new byte[]
+                {
+                    0x00, // role byte 1
+                    (byte)Constants.FCGI_RESPONDER, // role byte 2
+                    Constants.FCGI_KEEP_CONN, // flags
+                    0x00, 0x00, 0x00, 0x00, 0x00 // reserved bytes
+                };
+
+                var beginRequest = new Record
+                {
+                    Type = Record.RecordType.BeginRequest,
+                    RequestId = requestId,
+                    ContentLength = beginRequestContent.Length,
+                    ContentData = beginRequestContent
+                };
+
+                beginRequest.WriteToStream(serverStream);
+
+                var stdinRequest = new Record
+                {
+                    Type = Record.RecordType.Stdin,
+                    RequestId = requestId,
+                    ContentLength = 0,
+                    ContentData = new byte[0]
+                };
+
+                stdinRequest.WriteToStream(serverStream);
+
+                serverStream.Flush();
+
+                // Make the app digest everything
+                while(receivedRequest == null)
+                {
+                    app.Process();
+                }
+                    
+
+                // Do we have the correct request?
+                Assert.AreEqual(requestId, receivedRequest.RequestId);
+
+                // And did the response work?
+                var responseRecord = Record.ReadRecord(serverStream);
+                Assert.AreEqual(Record.RecordType.Stdout, responseRecord.Type);
+                Assert.AreEqual("Hello Server!", Encoding.ASCII.GetString(responseRecord.ContentData));
+
+                // Change the timeout while still connected
+                app.Timeout = 100;
+
+                app.StopListening();
+                Assert.IsFalse(app.Connected);
+
+            }
+            // If the port is already in use, an execution can be thrown.
+            // Report the test as inconclusive then.
+            catch(SocketException e)
+            {
+                Assert.Inconclusive("SocketException: " + e.Message);
+            }
+        }
     }
 }

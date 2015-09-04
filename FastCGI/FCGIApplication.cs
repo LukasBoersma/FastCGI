@@ -18,7 +18,7 @@ namespace FastCGI
     /// <remarks>
     /// This class manages a connection to a webserver by listening on a given port on localhost and receiving FastCGI
     /// requests by a webserver like Apache or nginx.
-    ///
+    /// 
     /// In FastCGI terms, this class implements the responder role. Refer to section 6.2 of the FastCGI specification
     /// for details.
     /// 
@@ -88,6 +88,46 @@ namespace FastCGI
         /// </remarks>
         public event EventHandler<Request> OnRequestReceived = null;
 
+        int _Timeout = 5000;
+        /// <summary>
+        /// The read/write timeouts in miliseconds for the listening socket, the connections, and the streams.
+        /// </summary>
+        public int Timeout
+        {
+            get { return _Timeout; }
+            set
+            {
+                _Timeout = value;
+                ApplyTimeoutSetting();
+            }
+        }
+
+        void ApplyTimeoutSetting()
+        {
+            if (ListeningSocket != null)
+            {
+                ListeningSocket.ReceiveTimeout = Timeout;
+                ListeningSocket.SendTimeout = Timeout;
+            }
+
+            if (CurrentConnection != null)
+            {
+                CurrentConnection.ReceiveTimeout = Timeout;
+                CurrentConnection.SendTimeout = Timeout;
+            }
+
+            if (CurrentStream != null && CurrentStream.CanTimeout)
+            {
+                // Can't set zero timeout, so use int.MaxValue instead
+                var ms = Timeout;
+                if (ms <= 0)
+                    ms = int.MaxValue;
+
+                CurrentStream.ReadTimeout = ms;
+                CurrentStream.WriteTimeout = ms;
+            }
+        }
+
         Socket ListeningSocket;
         Socket CurrentConnection;
 
@@ -117,10 +157,12 @@ namespace FastCGI
 
             ListeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             ListeningSocket.Bind(endPoint);
-            ListeningSocket.ReceiveTimeout = 5000;
-            ListeningSocket.SendTimeout = 5000;
+            ApplyTimeoutSetting();
             ListeningSocket.Listen(1);
         }
+
+        IAsyncResult AcceptAsyncResult;
+        bool AcceptIsReady;
 
         /// <summary>
         /// Processes all data available on the current FastCGI connection and handles the received data.
@@ -133,15 +175,20 @@ namespace FastCGI
         /// </remarks>
         public bool Process()
         {
-            // When listening, but not currently connected, 
-            if(ListeningSocket != null && (CurrentConnection == null || !CurrentConnection.Connected))
+            // When listening, but not currently connected, and not yet waiting for an incoming connection, start the connection accept
+            if (ListeningSocket != null && AcceptAsyncResult == null && (CurrentConnection == null || !CurrentConnection.Connected))
             {
-                CurrentConnection = ListeningSocket.Accept();
-                CurrentConnection.ReceiveTimeout = 5000;
-                CurrentConnection.SendTimeout = 5000;
+                AcceptAsyncResult = ListeningSocket.BeginAccept((r) => { AcceptIsReady = true; }, null);
+            }
+            
+            if(AcceptIsReady)
+            {
+                CurrentConnection = ListeningSocket.EndAccept(AcceptAsyncResult);
+                AcceptAsyncResult = null;
+                AcceptIsReady = false;
+
                 var stream = new NetworkStream(CurrentConnection);
-                stream.ReadTimeout = 5000;
-                stream.WriteTimeout = 5000;
+                ApplyTimeoutSetting();
 
                 CurrentStream = stream;
 
@@ -265,7 +312,8 @@ namespace FastCGI
         {
             if (CurrentConnection != null && CurrentConnection.Connected)
             {
-                CurrentConnection.Disconnect(true);
+                CurrentConnection.Shutdown(SocketShutdown.Send);
+                CurrentConnection.Close(100);
                 CurrentConnection = null;
                 CurrentStream = null;
             }

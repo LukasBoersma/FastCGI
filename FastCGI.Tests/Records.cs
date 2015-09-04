@@ -151,5 +151,132 @@ namespace FastCGI.Tests
                 Assert.AreEqual(record, read);
             }
         }
+
+        [Test]
+        public void Records_BrokenRecords()
+        {
+            // Create some broken records and make sure the right things happen
+            Record result;
+
+            // An empty stream should simply result in a null record
+            var emptyStream = new MemoryStream(new byte[0]);
+            result = Record.ReadRecord(emptyStream);
+            Assert.IsNull(result);
+
+            // A wrong version number bytes should throw a InvalidDataException
+            var wrongVersion = new MemoryStream(new byte[1] { Constants.FCGI_VERSION_1 + 1 });
+            Assert.Throws(typeof(InvalidDataException), () => { Record.ReadRecord(wrongVersion); });
+
+
+            // So should a bunch of zeroes
+            var zeroes = new MemoryStream(new byte[4] { 0, 0, 0, 0 });
+            Assert.Throws(typeof(InvalidDataException), () => { Record.ReadRecord(zeroes); });
+
+            // And a correct version number with an incomplete header
+            var incomplete = new MemoryStream(new byte[4] { Constants.FCGI_VERSION_1, 0, 0, 0 });
+            Assert.Throws(typeof(InvalidDataException), () => { Record.ReadRecord(incomplete); });
+
+
+            // Writing should fail for content above 64KB
+            var tooLong = new Record
+            {
+                Version = Constants.FCGI_VERSION_1,
+                Type = Record.RecordType.Stderr,
+                RequestId = 123,
+                ContentLength = 127000,
+                ContentData = new byte[127000]
+            };
+            Assert.Throws(typeof(InvalidOperationException), () => { tooLong.WriteToStream(new MemoryStream()); });
+        }
+
+        [Test]
+        public void Records_Equals()
+        {
+            var recordA1 = new Record
+            {
+                Version = Constants.FCGI_VERSION_1,
+                Type = Record.RecordType.Stderr,
+                RequestId = 123,
+                ContentLength = 1,
+                ContentData = new byte[1] { 1 }
+            };
+
+            var recordA2 = new Record
+            {
+                Version = Constants.FCGI_VERSION_1,
+                Type = Record.RecordType.Stderr,
+                RequestId = 123,
+                ContentLength = 1,
+                ContentData = new byte[1] { 1 }
+            };
+
+            var recordB1 = new Record
+            {
+                Version = Constants.FCGI_VERSION_1,
+                Type = Record.RecordType.BeginRequest,
+                RequestId = 321,
+                ContentLength = 1,
+                ContentData = new byte[1] { 1 }
+            };
+
+            var recordB2 = new Record
+            {
+                Version = Constants.FCGI_VERSION_1,
+                Type = Record.RecordType.BeginRequest,
+                RequestId = 321,
+                ContentLength = 1,
+                ContentData = new byte[1] { 1 }
+            };
+
+            var recordC1 = new Record
+            {
+                Version = Constants.FCGI_VERSION_1,
+                Type = Record.RecordType.BeginRequest,
+                RequestId = 321,
+                ContentLength = 1,
+                ContentData = new byte[1] { 2 }
+            };
+
+            var recordC2 = new Record
+            {
+                Version = Constants.FCGI_VERSION_1,
+                Type = Record.RecordType.BeginRequest,
+                RequestId = 321,
+                ContentLength = 1,
+                ContentData = new byte[1] { 2 }
+            };
+
+            Assert.IsTrue(recordA1.Equals(recordA2));
+            Assert.IsTrue(recordB1.Equals(recordB2));
+            Assert.IsTrue(recordC1.Equals(recordC2));
+
+            Assert.IsFalse(recordA1.Equals(recordB2));
+            Assert.IsFalse(recordA1.Equals(recordB1));
+            Assert.IsFalse(recordA1.Equals(recordC1));
+
+            Assert.IsFalse(recordB1.Equals(recordA1));
+            Assert.IsFalse(recordB1.Equals(recordA2));
+            Assert.IsFalse(recordB1.Equals(recordC1));
+
+            Assert.IsFalse(recordB1.Equals(null));
+
+            Assert.IsFalse(recordB1.Equals(5));
+        }
+
+        [Test]
+        public void Records_ToString()
+        {
+            var someRecord = new Record
+            {
+                Version = Constants.FCGI_VERSION_1,
+                Type = Record.RecordType.Stderr,
+                RequestId = 123,
+                ContentLength = 15,
+                ContentData = new byte[15]
+            };
+
+            string stringified = someRecord.ToString();
+            Assert.AreEqual("{Record type: Stderr, requestId: 123}", stringified);
+        }
     }
 }
