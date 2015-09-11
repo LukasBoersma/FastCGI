@@ -23,13 +23,13 @@ namespace FastCGI
         /// Creates a new request. Usually, you don't need to call this.
         /// </summary>
         /// <remarks> Records are created by <see cref="FCGIApplication"/> when a new request has been received.</remarks>
-        public Request(int requestId, Stream responseStream, FCGIApplication app = null)
+        public Request(int requestId, Stream responseStream, FCGIApplication app = null, string body = "")
         {
             this.RequestId = requestId;
-            Body = "";
             ResponseStream = responseStream;
             ParamStream = new MemoryStream();
             ManagingApp = app;
+            Body = body;
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace FastCGI
         /// <remarks>
         /// For POST requests, this will contain the POST variables. For GET requests, this will be empty.
         /// </remarks>
-        public string Body { get; private set; }
+        public string Body { get; set; }
 
         /// <summary>
         /// Incoming parameter records are stored here, until the parameter stream is closed by the webserver by sending an empty param record.

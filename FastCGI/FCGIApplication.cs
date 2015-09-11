@@ -89,9 +89,11 @@ namespace FastCGI
         public event EventHandler<Request> OnRequestReceived = null;
 
         int _Timeout = 5000;
+
         /// <summary>
         /// The read/write timeouts in miliseconds for the listening socket, the connections, and the streams.
         /// </summary>
+        /// <remarks>Zero or -1 mean infinite timeout.</remarks>
         public int Timeout
         {
             get { return _Timeout; }
