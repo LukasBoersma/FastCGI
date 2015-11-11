@@ -327,6 +327,13 @@ namespace FastCGI
             }
         }
 
+        public bool IsStopping { get; protected set; }
+
+        public void Stop()
+        {
+            IsStopping = true;
+        }
+
         /// <summary>
         /// This method never returns! Starts listening for FastCGI requests on the given port.
         /// </summary>
@@ -336,9 +343,10 @@ namespace FastCGI
         /// </remarks>
         public void Run(int port)
         {
+            IsStopping = false;
             Listen(port);
 
-            while (true)
+            while (!IsStopping)
             {
                 var receivedARecord = Process();
 
