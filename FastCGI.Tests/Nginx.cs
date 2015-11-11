@@ -54,7 +54,7 @@ namespace FastCGI.Tests
             var nginxProcess = Process.Start(new ProcessStartInfo
             {
                 FileName = "nginx",
-                Arguments = "-c " + configFile,
+                Arguments = "-c " + Directory.GetCurrentDirectory() + "/" + configFile,
             });
 
             Thread.Sleep(5000);
