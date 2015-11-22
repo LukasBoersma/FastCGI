@@ -32,7 +32,7 @@ var app = new FCGIApplication();
             
 // Handle requests by responding with a 'Hello World' message
 app.OnRequestReceived += (sender, request) => {
-    request.WriteResponseASCII("Content-Type:text/html\n\nHello World!");
+    request.WriteResponseASCII("HTTP/1.1 200 OK\nContent-Type:text/html\n\nHello World!");
     request.Close();
 };
 // Start listening on port 19000
@@ -84,6 +84,10 @@ Returns true if a record was read, false otherwise.
 * *void* **StopListening** *()*  
   Stops listening for incoming connections.  
 
+<a id="FastCGI.FCGIApplication.Stop"></a>
+
+* *void* **Stop** *()*  
+
 <a id="FastCGI.FCGIApplication.Run(System.Int32)"></a>
 
 * *void* **Run** *(int port)*  
@@ -115,6 +119,26 @@ This means that this event may fire multiple times before you call [Request.Clos
 
 * *int* **Timeout**  
   The read/write timeouts in miliseconds for the listening socket, the connections, and the streams.  
+  Zero or -1 mean infinite timeout.
+
+
+<a id="FastCGI.FCGIApplication.ListeningSocket"></a>
+
+* *System.Net.Sockets.Socket* **ListeningSocket**  
+  The main listening socket that is used to establish connections.  
+
+
+<a id="FastCGI.FCGIApplication.OpenConnections"></a>
+
+* *List&lt;FastCGI.FCGIStream&gt;* **OpenConnections**  
+  A list of open [FCGIStream](#FastCGI.FCGIStream) connections.  
+  When a connection is accepted from [ListeningSocket](#FastCGI.FCGIApplication.ListeningSocket) , it is added here.
+Contains all connections that were still open after the last [Process](#FastCGI.FCGIApplication.Process) call.
+
+
+<a id="FastCGI.FCGIApplication.IsStopping"></a>
+
+* *bool* **IsStopping**  
 
 
 
@@ -124,17 +148,34 @@ This means that this event may fire multiple times before you call [Request.Clos
   A dictionary of all open [Requests](#FastCGI.Request) , indexed by the FastCGI request id.  
 
 
-<a id="FastCGI.FCGIApplication.CurrentStream"></a>
-
-* *Stream* **CurrentStream**  
-  The network stream of the connection to the webserver.  
-  Can be null if the application is currently not connected to a webserver.
 
 
-<a id="FastCGI.FCGIApplication.RequestFinished"></a>
 
-* *bool* **RequestFinished**  
-  True iff this application is about to close the connection to the webserver.  
+---
+
+<a id="FastCGI.FCGIStream"></a>
+## class FastCGI.FCGIStream
+* Extends System.Net.Sockets.NetworkStream*
+
+Represents a FastCGI connection to a webserver.
+
+At any given time, a single [FCGIApplication](#FastCGI.FCGIApplication) may have any number of open FCGIStream connections (including zero).
+No attempt is made to limit that number.
+This is basically just an extension of [ystem.Net.Sockets.NetworkStream](#System.Net.Sockets.NetworkStream) , with the underlying [Socket](#FastCGI.FCGIStream.Socket) exposed.
+
+**Properties and Fields**
+
+<a id="FastCGI.FCGIStream.IsConnected"></a>
+
+* *bool* **IsConnected**  
+  True iff the connection is still open.  
+
+
+<a id="FastCGI.FCGIStream.Socket"></a>
+
+* *System.Net.Sockets.Socket* **Socket**  
+  The underlying socket of the  
+
 
 
 
@@ -318,6 +359,18 @@ Remember to call [Close](#FastCGI.Request.Close) when you wrote the complete res
 
 
 **Properties and Fields**
+
+<a id="FastCGI.Request.ResponseStream"></a>
+
+* *Stream* **ResponseStream**  
+  The stream where responses to this request should be written to.
+Only write FastCGI records here, not the raw response body. Use [WriteResponse](#FastCGI.Request.WriteResponse(System.Byte[])) for sending response data.  
+
+
+<a id="FastCGI.Request.KeepAlive"></a>
+
+* *bool* **KeepAlive**  
+
 
 <a id="FastCGI.Request.RequestId"></a>
 
