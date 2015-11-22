@@ -44,7 +44,7 @@ namespace FastCGI
     ///
     /// // Handle requests by responding with a 'Hello World' message
     /// app.OnRequestReceived += (sender, request) => {
-    ///     request.WriteResponseASCII("Content-Type:text/html\n\nHello World!");
+    ///     request.WriteResponseASCII("HTTP/1.1 200 OK\nContent-Type:text/html\n\nHello World!");
     ///     request.Close();
     /// };
     /// // Start listening on port 19000
@@ -62,22 +62,9 @@ namespace FastCGI
         public Dictionary<int, Request> OpenRequests = new Dictionary<int, Request>();
 
         /// <summary>
-        /// The network stream of the connection to the webserver.
-        /// </summary>
-        /// <remarks>
-        /// Can be null if the application is currently not connected to a webserver.
-        /// </remarks>
-        public Stream CurrentStream = null;
-
-        /// <summary>
         /// True iff this application is currently connected to a webserver.
         /// </summary>
-        public bool Connected { get { return CurrentStream != null && !RequestFinished; } }
-
-        /// <summary>
-        /// True iff this application is about to close the connection to the webserver.
-        /// </summary>
-        public bool RequestFinished = false;
+        public bool Connected { get { return OpenConnections.Count != 0; } }
 
         /// <summary>
         /// Will be called whenever a request has been received.
@@ -89,7 +76,6 @@ namespace FastCGI
         public event EventHandler<Request> OnRequestReceived = null;
 
         int _Timeout = 5000;
-
         /// <summary>
         /// The read/write timeouts in miliseconds for the listening socket, the connections, and the streams.
         /// </summary>
@@ -112,31 +98,37 @@ namespace FastCGI
                 ListeningSocket.SendTimeout = Timeout;
             }
 
-            if (CurrentConnection != null)
-            {
-                CurrentConnection.ReceiveTimeout = Timeout;
-                CurrentConnection.SendTimeout = Timeout;
-            }
-
-            if (CurrentStream != null && CurrentStream.CanTimeout)
+            foreach(var connection in OpenConnections)
             {
                 // Can't set zero timeout, so use int.MaxValue instead
                 var ms = Timeout;
                 if (ms <= 0)
                     ms = int.MaxValue;
 
-                CurrentStream.ReadTimeout = ms;
-                CurrentStream.WriteTimeout = ms;
+                connection.ReadTimeout = ms;
+                connection.WriteTimeout = ms;
             }
         }
 
-        Socket ListeningSocket;
-        Socket CurrentConnection;
+        /// <summary>
+        /// The main listening socket that is used to establish connections.
+        /// </summary>
+        public Socket ListeningSocket
+        {
+            get; protected set;
+        }
 
         /// <summary>
-        /// Indicates whether the current connection should be closed after the next request is closed.
+        /// A list of open <see cref="FCGIStream"/> connections.
         /// </summary>
-        bool KeepConnection = false;
+        /// <remarks>
+        /// When a connection is accepted from <see cref="ListeningSocket"/>, it is added here.
+        /// Contains all connections that were still open after the last <see cref="Process"/> call.
+        /// </remarks>
+        public List<FCGIStream> OpenConnections
+        {
+            get; protected set;
+        } = new List<FCGIStream>();
 
         /// <summary>
         /// Starts listening for connections on the given port.
@@ -178,30 +170,35 @@ namespace FastCGI
         public bool Process()
         {
             // When listening, but not currently connected, and not yet waiting for an incoming connection, start the connection accept
-            if (ListeningSocket != null && AcceptAsyncResult == null && (CurrentConnection == null || !CurrentConnection.Connected))
+            if (ListeningSocket != null && AcceptAsyncResult == null)
             {
                 AcceptAsyncResult = ListeningSocket.BeginAccept((r) => { AcceptIsReady = true; }, null);
+                Console.WriteLine("StartAccept");
             }
             
-            if(AcceptIsReady)
+            if(AcceptAsyncResult != null && AcceptAsyncResult.IsCompleted)
             {
-                CurrentConnection = ListeningSocket.EndAccept(AcceptAsyncResult);
-                AcceptAsyncResult = null;
+                Console.WriteLine("FinishAccept");
+                var connection = ListeningSocket.EndAccept(AcceptAsyncResult);
                 AcceptIsReady = false;
-
-                var stream = new NetworkStream(CurrentConnection);
+                AcceptAsyncResult = ListeningSocket.BeginAccept((r) => { AcceptIsReady = true; }, null);
+                
+                var stream = new FCGIStream(connection);
+                OpenConnections.Add(stream);
                 ApplyTimeoutSetting();
-
-                CurrentStream = stream;
-
-                KeepConnection = false;
             }
 
-            if (CurrentStream != null)
+            bool readARecord = false;
+            var currentConnections = OpenConnections.ToArray();
+            foreach(var stream in currentConnections)
             {
-                return ProcessStream(CurrentStream, CurrentStream);
+                if (!stream.IsConnected)
+                    OpenConnections.Remove(stream);
+                else
+                    readARecord |= ProcessStream(stream, stream);
             }
-            else return false;
+
+            return readARecord;            
         }
 
         /// <summary>
@@ -241,7 +238,7 @@ namespace FastCGI
                 return false;
 
             Record r = Record.ReadRecord(inputStream);
-
+            
             // No record found on the stream?
             if (r == null)
             {
@@ -259,10 +256,8 @@ namespace FastCGI
                 // Todo: Refuse requests for other roles than FCGI_RESPONDER
 
                 var flags = content.ReadByte();
-                if ((flags & Constants.FCGI_KEEP_CONN) != 0)
-                    KeepConnection = true;
-
-                var request = new Request(r.RequestId, outputStream, this);
+                var keepAlive = (flags & Constants.FCGI_KEEP_CONN) != 0;
+                var request = new Request(r.RequestId, outputStream, this, keepAlive: keepAlive);
                 OpenRequests.Add(request.RequestId, request);
             }
             else if (r.Type == Record.RecordType.AbortRequest || r.Type == Record.RecordType.EndRequest)
@@ -299,12 +294,16 @@ namespace FastCGI
         internal void RequestClosed(Request request)
         {
             OpenRequests.Remove(request.RequestId);
-            if(!KeepConnection)
-            {
-                CurrentConnection.Disconnect(true);
-                CurrentStream.Close();
-                CurrentStream = null;
-            }
+        }
+
+        /// <summary>
+        /// Used internally to notify the app that a connection has been closed.
+        /// </summary>
+        internal void ConnectionClosed(FCGIStream connection)
+        {
+            OpenConnections.Remove(connection);
+            connection.Socket.Disconnect(false);
+            connection.Socket.Close();
         }
 
         /// <summary>
@@ -312,14 +311,6 @@ namespace FastCGI
         /// </summary>
         public void StopListening()
         {
-            if (CurrentConnection != null && CurrentConnection.Connected)
-            {
-                CurrentConnection.Shutdown(SocketShutdown.Send);
-                CurrentConnection.Close(100);
-                CurrentConnection = null;
-                CurrentStream = null;
-            }
-
             if(ListeningSocket != null)
             {
                 ListeningSocket.Close();

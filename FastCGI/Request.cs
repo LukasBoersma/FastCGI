@@ -23,26 +23,29 @@ namespace FastCGI
         /// Creates a new request. Usually, you don't need to call this.
         /// </summary>
         /// <remarks> Records are created by <see cref="FCGIApplication"/> when a new request has been received.</remarks>
-        public Request(int requestId, Stream responseStream, FCGIApplication app = null, string body = "")
+        public Request(int requestId, Stream responseStream, FCGIApplication app = null, string body = "", bool keepAlive = false)
         {
             this.RequestId = requestId;
             ResponseStream = responseStream;
             ParamStream = new MemoryStream();
             ManagingApp = app;
             Body = body;
+            KeepAlive = keepAlive;
         }
 
         /// <summary>
         /// The stream where responses to this request should be written to.
         /// Only write FastCGI records here, not the raw response body. Use <see cref="WriteResponse"/> for sending response data.
         /// </summary>
-        Stream ResponseStream;
+        public Stream ResponseStream { get; protected set; }
 
         /// <summary>
         /// The FCGIApplication that manages this requests. Can be null if this request is not associated with any FCGIApplication.
         /// </summary>
         /// <remarks>The request will notify this app about certain events, for example when the request is closed.</remarks>
         FCGIApplication ManagingApp;
+
+        public bool KeepAlive { get; set; }
 
         /// <summary>
         /// The id for this request, issued by the webserver
@@ -93,7 +96,7 @@ namespace FastCGI
         /// <returns>Returns true iff the request is completely received.</returns>
         internal bool HandleRecord(Record record)
         {
-            switch(record.Type)
+            switch (record.Type)
             {
                 case Record.RecordType.Params:
 
@@ -134,7 +137,7 @@ namespace FastCGI
             int remainingLength = data.Length;
 
             // Send data with at most 65535 bytes in one record
-            if(remainingLength <= 65535)
+            if (remainingLength <= 65535)
             {
                 var record = Record.CreateStdout(data, RequestId);
                 record.Send(ResponseStream);
@@ -204,8 +207,15 @@ namespace FastCGI
             var record = Record.CreateEndRequest(RequestId);
             record.Send(ResponseStream);
 
+            if (!KeepAlive)
+                ResponseStream.Close();
+
             if (ManagingApp != null)
+            {
                 ManagingApp.RequestClosed(this);
+                if (!KeepAlive)
+                    ManagingApp.ConnectionClosed(ResponseStream as FCGIStream);
+            }
         }
 
     }

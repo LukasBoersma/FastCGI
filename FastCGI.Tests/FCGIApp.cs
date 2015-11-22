@@ -353,7 +353,6 @@ namespace FastCGI.Tests
             Assert.IsFalse(app.ProcessStream(new MemoryStream(), new MemoryStream()));
             Assert.IsFalse(app.ProcessSingleRecord(new MemoryStream(), new MemoryStream()));
             Assert.IsFalse(app.Connected);
-            Assert.IsNull(app.CurrentStream);
 
             app.StopListening();
         }
@@ -395,7 +394,7 @@ namespace FastCGI.Tests
                 {
                     0x00, // role byte 1
                     (byte)Constants.FCGI_RESPONDER, // role byte 2
-                    Constants.FCGI_KEEP_CONN, // flags
+                    0x00, // flags
                     0x00, 0x00, 0x00, 0x00, 0x00 // reserved bytes
                 };
 

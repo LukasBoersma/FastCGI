@@ -254,7 +254,7 @@ namespace FastCGI
 
                 r.Type = (Record.RecordType)ReadByte(stream);
                 r.RequestId = ReadInt16(stream);
-                r.ContentLength = ReadInt16(stream); ;
+                r.ContentLength = ReadInt16(stream);
                 byte paddingLength = ReadByte(stream);
 
                 // Skip reserved byte

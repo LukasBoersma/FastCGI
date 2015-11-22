@@ -15,7 +15,7 @@ using System.Threading;
 
 namespace FastCGI.Tests
 {
-    [TestFixture]
+    [TestFixture, Ignore]
     class Nginx
     {
         void AssertNginxInPath()
