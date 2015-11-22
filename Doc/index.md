@@ -22,7 +22,7 @@ var app = new FCGIApplication();
 
 // Handle requests by responding with a 'Hello World' message
 app.OnRequestReceived += (sender, request) => {
-    request.WriteBodyASCII("Content-Type:text/html\n\nHello World!");
+    request.WriteResponseASCII("HTTP/1.1 200 OK\nContent-Type:text/html\n\nHello World!");
     request.Close();
 };
 
