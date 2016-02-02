@@ -173,12 +173,10 @@ namespace FastCGI
             if (ListeningSocket != null && AcceptAsyncResult == null)
             {
                 AcceptAsyncResult = ListeningSocket.BeginAccept((r) => { AcceptIsReady = true; }, null);
-                Console.WriteLine("StartAccept");
             }
             
             if(AcceptAsyncResult != null && AcceptAsyncResult.IsCompleted)
             {
-                Console.WriteLine("FinishAccept");
                 var connection = ListeningSocket.EndAccept(AcceptAsyncResult);
                 AcceptIsReady = false;
                 AcceptAsyncResult = ListeningSocket.BeginAccept((r) => { AcceptIsReady = true; }, null);
