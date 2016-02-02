@@ -300,8 +300,6 @@ namespace FastCGI
         internal void ConnectionClosed(FCGIStream connection)
         {
             OpenConnections.Remove(connection);
-            connection.Socket.Disconnect(false);
-            connection.Socket.Close();
         }
 
         /// <summary>

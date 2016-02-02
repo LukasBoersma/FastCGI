@@ -45,6 +45,13 @@ namespace FastCGI
         /// <remarks>The request will notify this app about certain events, for example when the request is closed.</remarks>
         FCGIApplication ManagingApp;
 
+        /// <summary>
+        /// True iff the webserver set the KeepAlive flag for this request
+        /// </summary>
+        /// <remarks>
+        /// This indicates that the socket used for this request should be left open.
+        /// This is used internally by <see cref="FCGIApplication"/>.
+        /// </remarks>
         public bool KeepAlive { get; set; }
 
         /// <summary>
@@ -206,16 +213,20 @@ namespace FastCGI
             WriteResponse(new byte[0]);
             var record = Record.CreateEndRequest(RequestId);
             record.Send(ResponseStream);
-
+            ResponseStream.Flush();
             if (!KeepAlive)
-                ResponseStream.Close();
-
-            if (ManagingApp != null)
             {
-                ManagingApp.RequestClosed(this);
-                if (!KeepAlive)
+                // If the response stream is a regular FCGIStream and KeepAlive is false, disconnect it
+                var fcgiStream = ResponseStream as FCGIStream;
+                if (fcgiStream != null)
+                    fcgiStream.Disconnect();
+
+                if(ManagingApp != null)
                     ManagingApp.ConnectionClosed(ResponseStream as FCGIStream);
             }
+
+            if (ManagingApp != null)
+                ManagingApp.RequestClosed(this);
         }
 
     }
