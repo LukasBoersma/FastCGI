@@ -30,7 +30,7 @@ namespace FastCGI
         public bool IsConnected {  get { return Socket.Connected; } }
 
         /// <summary>
-        /// The underlying socket of the 
+        /// The underlying socket of the stream.
         /// </summary>
         public new Socket Socket { get { return base.Socket; } }
     }

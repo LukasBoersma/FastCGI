@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("FastCGI for .NET")]
-[assembly: AssemblyDescription("https://github.com/LukasBoersma/FastCGI This is an incomplete implementation of FastCGI for .NET, written in C#. It implements the parts that are neccessary to build a simple web application using .NET.")]
+[assembly: AssemblyDescription("https://github.com/LukasBoersma/FastCGI FastCGI client library for .NET. This library provides easy-to-use functions to build web applications with .NET.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Lukas Boersma")]
 [assembly: AssemblyProduct("FastCGI")]

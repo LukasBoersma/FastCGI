@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/LukasBoersma/FastCGI</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>FastCGI client library for .NET.</summary>
-    <description>FastCGI client library for .NET. This library provides easy-to-use functions to build a web applications with .NET.</description>
+    <description>FastCGI client library for .NET. This library provides easy-to-use functions to build web applications with .NET.</description>
     <releaseNotes>Version 1.2 introduces support for multiple concurrent connections and fixes several bugs that occured while doing testing with nginx.</releaseNotes>
     <copyright>Copyright Lukas Boersma 2015</copyright>
   </metadata>
