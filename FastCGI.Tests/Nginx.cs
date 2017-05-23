@@ -148,12 +148,12 @@ namespace FastCGI.Tests
 
             appThread.Start();
 
-            Task<string>[] results = new Task<string>[1000];
+            Task<string>[] results = new Task<string>[100];
 
             for (int i = 0; i < results.Length; i++)
             {
                 results[i] = GetHttpAsync("http://localhost:8182");
-                Thread.Sleep(1);
+                Thread.Sleep(10);
             }
 
             for (int i = 0; i < results.Length; i++)

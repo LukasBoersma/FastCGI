@@ -27,11 +27,21 @@ namespace FastCGI
         /// <summary>
         /// True iff the connection is still open.
         /// </summary>
-        public bool IsConnected {  get { return Socket.Connected; } }
+        public bool IsConnected {  get { return Socket != null && Socket.Connected; } }
 
         /// <summary>
         /// The underlying socket of the 
         /// </summary>
         public new Socket Socket { get { return base.Socket; } }
+
+        public void Disconnect()
+        {
+            if (Socket != null)
+            {
+                if (IsConnected)
+                    Socket.Disconnect(false);
+                Socket.Close();
+            }
+        }
     }
 }
