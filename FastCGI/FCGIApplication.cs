@@ -43,10 +43,17 @@ namespace FastCGI
     /// var app = new FCGIApplication();
     ///
     /// // Handle requests by responding with a 'Hello World' message
-    /// app.OnRequestReceived += (sender, request) => {
-    ///     request.WriteResponseASCII("HTTP/1.1 200 OK\nContent-Type:text/html\n\nHello World!");
-    ///     request.Close();
-    /// };
+    /// app.OnRequestReceived += (sender, request) =>
+    ///     {
+    ///         var responseString =
+    ///             "HTTP/1.1 200 OK\n"
+    ///             + "Content-Type:text/html\n"
+    ///             + "\n"
+    ///             + "Hello World!";
+    /// 
+    ///         request.WriteResponseASCII(responseString);
+    ///         request.Close();
+    ///     };
     /// // Start listening on port 19000
     /// app.Run(19000);
     /// 
@@ -67,13 +74,22 @@ namespace FastCGI
         public bool Connected { get { return OpenConnections.Count != 0; } }
 
         /// <summary>
-        /// Will be called whenever a request has been received.
+        /// Will be called when a request has been fully received.
         /// </summary>
         /// <remarks>
         /// Please note that multiple requests can be open at the same time.
         /// This means that this event may fire multiple times before you call <see cref="Request.Close"/> on the first one.
         /// </remarks>
         public event EventHandler<Request> OnRequestReceived = null;
+
+        /// <summary>
+        /// Will be called when a new request is incoming, before it has been fully received.
+        /// </summary>
+        /// <remarks>
+        /// At the time of calling, the request will have neither any parameters nor any request body.
+        /// Please note that multiple requests can be open at the same time.
+        /// </remarks>
+        public event EventHandler<Request> OnRequestIncoming = null;
 
         int _Timeout = 5000;
         /// <summary>
@@ -257,6 +273,10 @@ namespace FastCGI
                 var keepAlive = (flags & Constants.FCGI_KEEP_CONN) != 0;
                 var request = new Request(r.RequestId, outputStream, this, keepAlive: keepAlive);
                 OpenRequests.Add(request.RequestId, request);
+
+                var incomingHandler = OnRequestIncoming;
+                if (incomingHandler != null)
+                    incomingHandler(this, request);
             }
             else if (r.Type == Record.RecordType.AbortRequest || r.Type == Record.RecordType.EndRequest)
             {
@@ -299,9 +319,10 @@ namespace FastCGI
         /// </summary>
         internal void ConnectionClosed(FCGIStream connection)
         {
-            OpenConnections.Remove(connection);
-            connection.Socket.Disconnect(false);
-            connection.Socket.Close();
+            if (connection != null && OpenConnections.Contains(connection))
+            {
+                OpenConnections.Remove(connection);
+            }
         }
 
         /// <summary>

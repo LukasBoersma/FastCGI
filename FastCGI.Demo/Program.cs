@@ -18,7 +18,13 @@ namespace FastCGI.Demo
             // Handle requests by responding with a 'Hello World' message
             app.OnRequestReceived += (sender, request) =>
             {
-                request.WriteResponseASCII("HTTP/1.1 200 OK\nContent-Type:text/html\n\nHello World!");
+                var responseString =
+                      "HTTP/1.1 200 OK\n"
+                    + "Content-Type:text/html\n"
+                    + "\n"
+                    + "Hello World!";
+
+                request.WriteResponseASCII(responseString);
                 request.Close();
             };
 

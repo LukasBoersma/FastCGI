@@ -21,8 +21,15 @@ This code example shows how to create a FastCGI application and receive requests
 var app = new FCGIApplication();
 
 // Handle requests by responding with a 'Hello World' message
-app.OnRequestReceived += (sender, request) => {
-    request.WriteResponseASCII("HTTP/1.1 200 OK\nContent-Type:text/html\n\nHello World!");
+app.OnRequestReceived += (sender, request) =>
+{
+    var responseString =
+          "HTTP/1.1 200 OK\n"
+        + "Content-Type:text/html\n"
+        + "\n"
+        + "Hello World!";
+
+    request.WriteResponseASCII(responseString);
     request.Close();
 };
 
@@ -62,41 +69,19 @@ If you think you found a bug, you can open an Issue on [Github](https://github.c
 
 ## Web server configuration
 
-Refer to your web server documentation for configuration details:
+For nginx, use `fastcgi_pass` to pass requests to your FastCGI application:
+
+    location / {
+        fastcgi_pass   127.0.0.1:19000; # Pass all requests to port 19000 via FastCGI.
+        include fastcgi_params; # (Optional): Set several FastCGI parameters like the remote IP, the URI, and other useful metadata.
+    }
+
+In the example above, `fastcgi_params` is a file that defines FastCGI parameters. It is included in most nginx default configurations and contains lines like these:
+
+    fastcgi_param   QUERY_STRING       $query_string;
+    fastcgi_param   REMOTE_ADDR        $remote_addr;
+
+For more details, refer to your web server documentation for configuration details:
 
  * [nginx documentation](http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html)
  * [Apache documentation](http://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html)
-
-For nginx, add this to pass all requests to your FastCGI application:
-
-    location / {
-        include fastcgi_params;
-        fastcgi_pass   127.0.0.1:19000;
-    }
-
-Where fastcgi_params is a file in your nginx config folder, containing something like:
-
-    fastcgi_param   QUERY_STRING            $query_string;
-    fastcgi_param   REQUEST_METHOD          $request_method;
-    fastcgi_param   CONTENT_TYPE            $content_type;
-    fastcgi_param   CONTENT_LENGTH          $content_length;
-
-    fastcgi_param   SCRIPT_FILENAME         $document_root$fastcgi_script_name;
-    fastcgi_param   SCRIPT_NAME             $fastcgi_script_name;
-    fastcgi_param   PATH_INFO               $fastcgi_path_info;
-    fastcgi_param 	PATH_TRANSLATED         $document_root$fastcgi_path_info;
-    fastcgi_param   REQUEST_URI             $request_uri;
-    fastcgi_param   DOCUMENT_URI            $document_uri;
-    fastcgi_param   DOCUMENT_ROOT           $document_root;
-    fastcgi_param   SERVER_PROTOCOL         $server_protocol;
-
-    fastcgi_param   GATEWAY_INTERFACE       CGI/1.1;
-    fastcgi_param   SERVER_SOFTWARE         nginx/$nginx_version;
-
-    fastcgi_param   REMOTE_ADDR             $remote_addr;
-    fastcgi_param   REMOTE_PORT             $remote_port;
-    fastcgi_param   SERVER_ADDR             $server_addr;
-    fastcgi_param   SERVER_PORT             $server_port;
-    fastcgi_param   SERVER_NAME             $server_name;
-
-    fastcgi_param   HTTPS                   $https;

@@ -49,7 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FastCGI\FastCGI.csproj">
-      <Project>{4e960156-aafa-44e7-9f0e-fb19069710a6}</Project>
+      <Project>{4E960156-AAFA-44E7-9F0E-FB19069710A6}</Project>
       <Name>FastCGI</Name>
     </ProjectReference>
   </ItemGroup>

@@ -23,13 +23,12 @@ namespace FastCGI
         /// Creates a new request. Usually, you don't need to call this.
         /// </summary>
         /// <remarks> Records are created by <see cref="FCGIApplication"/> when a new request has been received.</remarks>
-        public Request(int requestId, Stream responseStream, FCGIApplication app = null, string body = "", bool keepAlive = false)
+        public Request(int requestId, Stream responseStream, FCGIApplication app = null, bool keepAlive = false)
         {
             this.RequestId = requestId;
             ResponseStream = responseStream;
             ParamStream = new MemoryStream();
             ManagingApp = app;
-            Body = body;
             KeepAlive = keepAlive;
         }
 
@@ -45,6 +44,13 @@ namespace FastCGI
         /// <remarks>The request will notify this app about certain events, for example when the request is closed.</remarks>
         FCGIApplication ManagingApp;
 
+        /// <summary>
+        /// True iff the webserver set the KeepAlive flag for this request
+        /// </summary>
+        /// <remarks>
+        /// This indicates that the socket used for this request should be left open.
+        /// This is used internally by <see cref="FCGIApplication"/>.
+        /// </remarks>
         public bool KeepAlive { get; set; }
 
         /// <summary>
@@ -77,17 +83,59 @@ namespace FastCGI
         }
 
         /// <summary>
-        /// The request body.
+        /// A stream providing the request body.
         /// </summary>
         /// <remarks>
         /// For POST requests, this will contain the POST variables. For GET requests, this will be empty.
         /// </remarks>
-        public string Body { get; set; }
+        public MemoryStream RequestBodyStream { get; protected set; } = new MemoryStream();
 
         /// <summary>
         /// Incoming parameter records are stored here, until the parameter stream is closed by the webserver by sending an empty param record.
         /// </summary>
         MemoryStream ParamStream;
+
+        /// <summary>
+        /// True iff the parameters have been fully received.
+        /// </summary>
+        public bool FinishedParameters { get; protected set; } = false;
+
+        /// <summary>
+        /// True iff the request body has been fully received.
+        /// </summary>
+        public bool FinishedRequestBody { get; protected set; } = false;
+
+        /// <summary>
+        /// True iff this request has been fully received, i.e. both the parameters and the request body has been received.
+        /// </summary>
+        public bool Finished { get { return FinishedParameters && FinishedRequestBody; } }
+
+        /// <summary>
+        /// Decodes the request body into a string with the given encoding and returns it. 
+        /// </summary>
+        /// <param name="encoding">The encoding to use. If null or omitted, Encoding.ASCII will be used.</param>
+        /// <remarks>
+        /// Will return incomplete data until FinishedRequestBody is true.
+        /// </remarks>
+        public string GetBody(Encoding encoding = null)
+        {
+            if (encoding == null)
+            {
+                encoding = Encoding.ASCII;
+            }
+            return encoding.GetString(RequestBodyStream.ToArray());
+        }
+
+        /// <summary>
+        /// Writes the request body to a byte array and returns it.
+        /// </summary>
+        /// <remarks>
+        /// Will return incomplete data until FinishedRequestBody is true.
+        /// </remarks>
+        public byte[] GetBody()
+        {
+            return RequestBodyStream.ToArray();
+        }
 
         /// <summary>
         /// Used internally. Feeds a <see cref="Record">Record</see> to this request for processing.
@@ -99,11 +147,12 @@ namespace FastCGI
             switch (record.Type)
             {
                 case Record.RecordType.Params:
-
+                    // An empty parameter record specifies that all parameters have been transmitted
                     if (record.ContentLength == 0)
                     {
                         ParamStream.Seek(0, SeekOrigin.Begin);
                         Parameters = Record.ReadNameValuePairs(ParamStream);
+                        FinishedParameters = true;
                     }
                     else
                     {
@@ -112,16 +161,20 @@ namespace FastCGI
                     }
                     break;
                 case Record.RecordType.Stdin:
-                    string data = Encoding.ASCII.GetString(record.ContentData);
-                    Body += data;
+                    var oldPos = RequestBodyStream.Position;
+                    RequestBodyStream.Seek(0, SeekOrigin.End);
+                    RequestBodyStream.Write(record.ContentData, 0, record.ContentLength);
+                    RequestBodyStream.Position = oldPos;
 
                     // Finished requests are indicated by an empty stdin record
                     if (record.ContentLength == 0)
+                    {
+                        FinishedRequestBody = true;
                         return true;
+                    }
 
                     break;
             }
-
             return false;
         }
 
@@ -198,24 +251,34 @@ namespace FastCGI
             WriteResponse(bytes);
         }
 
+        public bool IsOpen { get; protected set; } = true;
+
         /// <summary>
         /// Closes this request.
         /// </summary>
         public void Close()
         {
-            WriteResponse(new byte[0]);
-            var record = Record.CreateEndRequest(RequestId);
-            record.Send(ResponseStream);
-
-            if (!KeepAlive)
-                ResponseStream.Close();
-
-            if (ManagingApp != null)
+            if (IsOpen)
             {
-                ManagingApp.RequestClosed(this);
+                WriteResponse(new byte[0]);
+                var record = Record.CreateEndRequest(RequestId);
+                record.Send(ResponseStream);
+                ResponseStream.Flush();
                 if (!KeepAlive)
-                    ManagingApp.ConnectionClosed(ResponseStream as FCGIStream);
+                {
+                    // If the response stream is a regular FCGIStream and KeepAlive is false, disconnect it
+                    var fcgiStream = ResponseStream as FCGIStream;
+                    if (fcgiStream != null)
+                        fcgiStream.Disconnect();
+
+                    if (ManagingApp != null)
+                        ManagingApp.ConnectionClosed(ResponseStream as FCGIStream);
+                }
+
+                if (ManagingApp != null)
+                    ManagingApp.RequestClosed(this);
             }
+            IsOpen = false;
         }
 
     }
