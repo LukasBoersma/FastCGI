@@ -251,28 +251,34 @@ namespace FastCGI
             WriteResponse(bytes);
         }
 
+        public bool IsOpen { get; protected set; } = true;
+
         /// <summary>
         /// Closes this request.
         /// </summary>
         public void Close()
         {
-            WriteResponse(new byte[0]);
-            var record = Record.CreateEndRequest(RequestId);
-            record.Send(ResponseStream);
-            ResponseStream.Flush();
-            if (!KeepAlive)
+            if (IsOpen)
             {
-                // If the response stream is a regular FCGIStream and KeepAlive is false, disconnect it
-                var fcgiStream = ResponseStream as FCGIStream;
-                if (fcgiStream != null)
-                    fcgiStream.Disconnect();
+                WriteResponse(new byte[0]);
+                var record = Record.CreateEndRequest(RequestId);
+                record.Send(ResponseStream);
+                ResponseStream.Flush();
+                if (!KeepAlive)
+                {
+                    // If the response stream is a regular FCGIStream and KeepAlive is false, disconnect it
+                    var fcgiStream = ResponseStream as FCGIStream;
+                    if (fcgiStream != null)
+                        fcgiStream.Disconnect();
 
-                if(ManagingApp != null)
-                    ManagingApp.ConnectionClosed(ResponseStream as FCGIStream);
+                    if (ManagingApp != null)
+                        ManagingApp.ConnectionClosed(ResponseStream as FCGIStream);
+                }
+
+                if (ManagingApp != null)
+                    ManagingApp.RequestClosed(this);
             }
-
-            if (ManagingApp != null)
-                ManagingApp.RequestClosed(this);
+            IsOpen = false;
         }
 
     }

@@ -319,7 +319,10 @@ namespace FastCGI
         /// </summary>
         internal void ConnectionClosed(FCGIStream connection)
         {
-            OpenConnections.Remove(connection);
+            if (connection != null && OpenConnections.Contains(connection))
+            {
+                OpenConnections.Remove(connection);
+            }
         }
 
         /// <summary>
