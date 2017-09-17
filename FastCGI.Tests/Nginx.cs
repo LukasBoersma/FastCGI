@@ -75,8 +75,9 @@ namespace FastCGI.Tests
 
             if (nginxProcess.HasExited)
             {
-                File.WriteAllText("nginx_stdout.txt", nginxProcess.StandardOutput.ReadToEnd());
-                File.WriteAllText("nginx_stderr.txt", nginxProcess.StandardError.ReadToEnd());
+                Console.WriteLine("Nginx exited with output:");
+                Console.WriteLine(nginxProcess.StandardOutput.ReadToEnd());
+                Console.WriteLine(nginxProcess.StandardError.ReadToEnd());
             }
 
             Assert.IsFalse(nginxProcess.HasExited, "nginx process should be running");
