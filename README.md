@@ -1,6 +1,8 @@
 # FastCGI for .NET
 
-[![Build Status](https://travis-ci.org/LukasBoersma/FastCGI.svg)](https://travis-ci.org/LukasBoersma/FastCGI)
+| Windows/.NET | Linux/Mono |
+| ------------ | ---------- |
+| [![Build status](https://ci.appveyor.com/api/projects/status/bm1ohjrtrp878i8y?svg=true)](https://ci.appveyor.com/project/LukasBoersma/fastcgi) | [![Build Status](https://travis-ci.org/LukasBoersma/FastCGI.svg)](https://travis-ci.org/LukasBoersma/FastCGI) |
 
 This is an implementation of [FastCGI](http://www.fastcgi.com/devkit/doc/fcgi-spec.html) for .NET, written in C#. It implements the parts of the protocol that are necessary to build a simple web application using .NET.
 
