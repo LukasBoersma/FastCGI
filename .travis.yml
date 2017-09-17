@@ -10,8 +10,8 @@ install:
 script:
   - xbuild /p:Configuration=Release /p:TargetFrameworkVersion="v4.5" /p:ToolsVersion="4.0" FastCGI.sln
   - cd ./FastCGI.Tests/bin/Release/
-  - mono ../../../testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe ./FastCGI.Tests/bin/Release/FastCGI.Tests.dll
-  - mono ../../../testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe --test="FastCGI.Tests.Nginx.Nginx_SingleRequest" ./FastCGI.Tests/bin/Release/FastCGI.Tests.dll
-  - mono ../../../testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe --test="FastCGI.Tests.Nginx.Nginx_ManyRequests" ./FastCGI.Tests/bin/Release/FastCGI.Tests.dll
-  - mono ../../../testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe --test="FastCGI.Tests.Nginx.Nginx_ManyRequests_Keepalive" ./FastCGI.Tests/bin/Release/FastCGI.Tests.dll
+  - mono ../../../testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe ./FastCGI.Tests.dll
+  - mono ../../../testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe --test="FastCGI.Tests.Nginx.Nginx_SingleRequest" ./FastCGI.Tests.dll
+  - mono ../../../testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe --test="FastCGI.Tests.Nginx.Nginx_ManyRequests" ./FastCGI.Tests.dll
+  - mono ../../../testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe --test="FastCGI.Tests.Nginx.Nginx_ManyRequests_Keepalive" ./FastCGI.Tests.dll
   
