@@ -1,5 +1,8 @@
 ﻿namespace FastCGI
 {
+    /// <summary>
+    /// Constants defined in the FastCGI spec.
+    /// </summary>
     public static class Constants
     {
         /// <summary>
