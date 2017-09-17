@@ -126,7 +126,7 @@ namespace FastCGI.Tests
         /// <summary>
         /// Start a Nginx server that is connected to a FCGIApplication and do a single HTTP request.
         /// </summary>
-        [Test]
+        [Test, NonParallelizable, Explicit]
         public void Nginx_SingleRequest()
         {
             AssertNginxInPath();
@@ -158,7 +158,7 @@ namespace FastCGI.Tests
         /// <summary>
         /// Start a Nginx server that is connected to a FCGIApplication and do a large amount of requests in a very short time and make sure that they are all handled correctly.
         /// </summary>
-        [Test]
+        [Test, NonParallelizable, Explicit]
         public void Nginx_ManyRequests()
         {
             AssertNginxInPath();
@@ -179,7 +179,11 @@ namespace FastCGI.Tests
 
             appThread.Start();
 
-            Task<string>[] results = new Task<string>[100];
+            Task<string>[] results = new Task<string>[500];
+            // Count the successful responses
+            int successCount = 0;
+            // We will allow up to 2% failure rate
+            int minimumSuccessCount = (int)(results.Length * 0.98);
 
             for (int i = 0; i < results.Length; i++)
             {
@@ -191,8 +195,13 @@ namespace FastCGI.Tests
             {
                 results[i].Wait(20000);
                 var result = results[i].Result;
-                Assert.AreEqual(expectedResult, result);
+                if(expectedResult == result)
+                {
+                    successCount++;
+                }
             }
+
+            Assert.GreaterOrEqual(successCount, minimumSuccessCount, "At least 98% of requests should be successful");
 
             StopNginx(nginx);
             app.Stop();
@@ -201,7 +210,7 @@ namespace FastCGI.Tests
         /// <summary>
         /// Same as <see cref="Nginx_ManyRequests"/>, but with Nginx configured to keep the FastCGI connections open after requests.
         /// </summary>
-        [Test]
+        [Test, NonParallelizable, Explicit]
         public void Nginx_ManyRequests_Keepalive()
         {
             AssertNginxInPath();
