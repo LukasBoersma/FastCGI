@@ -337,8 +337,14 @@ namespace FastCGI
             }
         }
 
+        /// <summary>
+        /// True if the FastCGI application is shutting down. Call <see cref="Stop"/> to initiate the shutdown.
+        /// </summary>
         public bool IsStopping { get; protected set; }
 
+        /// <summary>
+        /// Initiate the shutdown of the FastCGI application. This is not blocking, so after calling this the application might still be running for a while.
+        /// </summary>
         public void Stop()
         {
             IsStopping = true;
