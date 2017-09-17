@@ -64,7 +64,7 @@ namespace FastCGI.Tests
             var nginxProcess = Process.Start(new ProcessStartInfo
             {
                 FileName = "nginx",
-                Arguments = "-c " + configFile,
+                Arguments = "-c " + configFile + " -p ./ -g \"error_log logs/error.log;\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -75,9 +75,10 @@ namespace FastCGI.Tests
 
             if (nginxProcess.HasExited)
             {
+                var nginxOutput = nginxProcess.StandardOutput.ReadToEnd() + "\n====STDERR===\n" + nginxProcess.StandardError.ReadToEnd();
                 Console.WriteLine("Nginx exited with output:");
-                Console.WriteLine(nginxProcess.StandardOutput.ReadToEnd());
-                Console.WriteLine(nginxProcess.StandardError.ReadToEnd());
+                Console.WriteLine(nginxOutput);
+                File.WriteAllText("nginx_output.txt", nginxOutput);
             }
 
             Assert.IsFalse(nginxProcess.HasExited, "nginx process should be running");
