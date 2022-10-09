@@ -359,6 +359,19 @@ namespace FastCGI
         /// <remarks>
         /// Use <see cref="OnRequestReceived"/> to react to incoming requests.
         /// Internally, this simply calls <see cref="Listen(EndPoint)"/> and enters an infinite loop of <see cref="Process()"/> calls.
+        /// Will accept connections from a UNIX domain socket. Use the <see cref="Run(EndPoint)"/> overload of this method to specify where to listen for connection.
+        /// </remarks>
+        public void Run(string port)
+        {
+            Run(new UnixDomainSocketEndPoint(port));
+        }
+
+        /// <summary>
+        /// This method never returns! Starts listening for FastCGI requests on the given port.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="OnRequestReceived"/> to react to incoming requests.
+        /// Internally, this simply calls <see cref="Listen(EndPoint)"/> and enters an infinite loop of <see cref="Process()"/> calls.
         /// Will only accept connections from localhost. Use the <see cref="Run(EndPoint)"/> overload of this method to specify where to listen for connection.
         /// </remarks>
         public void Run(int port)
