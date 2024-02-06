@@ -1,4 +1,6 @@
-# FastCGI for .NET
+# FastCGI for .NET (unmaintained!)
+
+**⚠️ Warning: This project is outdated and not maintained. You should not use it for your projects, it probably has security issues.**
 
 | Windows/.NET | Linux/Mono |
 | ------------ | ---------- |
