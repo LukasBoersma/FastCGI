@@ -160,12 +160,15 @@ namespace FastCGI
         /// <summary>
         /// Starts listening for connections on the given IP end point.
         /// </summary>
-        public void Listen(IPEndPoint endPoint)
+        public void Listen(EndPoint endPoint)
         {
             if (ListeningSocket != null)
                 throw new InvalidOperationException("Can not start listening while already listening.");
 
-            ListeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            if(endPoint is UnixDomainSocketEndPoint)
+                ListeningSocket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+            else
+                ListeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             ListeningSocket.Bind(endPoint);
             ApplyTimeoutSetting();
             ListeningSocket.Listen(1);
@@ -355,9 +358,35 @@ namespace FastCGI
         /// </summary>
         /// <remarks>
         /// Use <see cref="OnRequestReceived"/> to react to incoming requests.
-        /// Internally, this simply calls <see cref="Listen(int)"/> and enters an infinite loop of <see cref="Process()"/> calls.
+        /// Internally, this simply calls <see cref="Listen(EndPoint)"/> and enters an infinite loop of <see cref="Process()"/> calls.
+        /// Will accept connections from a UNIX domain socket. Use the <see cref="Run(EndPoint)"/> overload of this method to specify where to listen for connection.
+        /// </remarks>
+        public void Run(string port)
+        {
+            Run(new UnixDomainSocketEndPoint(port));
+        }
+
+        /// <summary>
+        /// This method never returns! Starts listening for FastCGI requests on the given port.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="OnRequestReceived"/> to react to incoming requests.
+        /// Internally, this simply calls <see cref="Listen(EndPoint)"/> and enters an infinite loop of <see cref="Process()"/> calls.
+        /// Will only accept connections from localhost. Use the <see cref="Run(EndPoint)"/> overload of this method to specify where to listen for connection.
         /// </remarks>
         public void Run(int port)
+        {
+            Run(new IPEndPoint(IPAddress.Loopback, port));
+        }
+
+        /// <summary>
+        /// This method never returns! Starts listening for FastCGI requests on the given port.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="OnRequestReceived"/> to react to incoming requests.
+        /// Internally, this simply calls <see cref="Listen(EndPoint)"/> and enters an infinite loop of <see cref="Process()"/> calls.
+        /// </remarks>
+        public void Run(EndPoint port)
         {
             IsStopping = false;
             Listen(port);
