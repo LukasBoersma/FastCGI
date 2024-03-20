@@ -367,7 +367,29 @@ namespace FastCGI
                 var receivedARecord = Process();
 
                 // If no records were processed, sleep for 1 millisecond until the next try to reduce CPU load
-                if(!receivedARecord)
+                if (!receivedARecord)
+                    Thread.Sleep(1);
+            }
+        }
+
+        /// <summary>
+        /// This method never returns! Starts listening for FastCGI requests on the given IP end point.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="OnRequestReceived"/> to react to incoming requests.
+        /// Internally, this simply calls <see cref="Listen(IPEndPoint)"/> and enters an infinite loop of <see cref="Process()"/> calls.
+        /// </remarks>
+        public void Run(IPEndPoint endPoint)
+        {
+            IsStopping = false;
+            Listen(endPoint);
+
+            while (!IsStopping)
+            {
+                var receivedARecord = Process();
+
+                // If no records were processed, sleep for 1 millisecond until the next try to reduce CPU load
+                if (!receivedARecord)
                     Thread.Sleep(1);
             }
         }
